@@ -12,6 +12,10 @@ const PgSession = require("connect-pg-simple")(session);
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const DiscordStrategy = require("passport-discord").Strategy;
+const {
+    initializeSupportDatabase,
+    createSupportRouter
+} = require("./support/eliteai");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -151,7 +155,8 @@ async function initializeDatabase() {
     `);
 
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT");
-
+    await initializeSupportDatabase(pool);
+    
     await pool.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique
         ON users (LOWER(email))
@@ -171,6 +176,14 @@ function requireDatabase(req, res, next) {
 
     next();
 }
+
+app.use(
+    "/api/support",
+    createSupportRouter({
+        pool,
+        requireDatabase
+    })
+);
 
 function publicUser(row) {
     return {
