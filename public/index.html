@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,41 +13,56 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+
 <section id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="auth-logo-wrap"><img class="elite-logo auth-logo" src="/images/elitehostx-logo.png" alt="EliteHostX"></div>
+      <div class="auth-logo-wrap">
+        <img class="elite-logo auth-logo" src="/images/elitehostx-logo.png" alt="EliteHostX">
+      </div>
       <h1>EliteHost<span>X</span></h1>
       <p>PREMIUM GAME HOSTING</p>
     </div>
+
     <div class="auth-heading">
       <h2>Welcome to EliteHostX</h2>
       <p>Sign in or create an account to manage your Minecraft servers.</p>
     </div>
+
     <div class="auth-tabs">
       <button type="button" id="loginTab" class="auth-tab active">SIGN IN</button>
       <button type="button" id="registerTab" class="auth-tab">CREATE ACCOUNT</button>
     </div>
+
     <div id="authMessage" class="auth-message hidden" role="alert"></div>
+
     <form id="loginForm" class="auth-form">
       <label for="loginEmail">Email</label>
       <input id="loginEmail" type="email" autocomplete="email" maxlength="320" placeholder="you@example.com" required>
+
       <label for="loginPassword">Password</label>
       <input id="loginPassword" type="password" autocomplete="current-password" maxlength="72" required>
+
       <button id="loginSubmit" type="submit" class="auth-submit">SIGN IN</button>
     </form>
+
     <form id="registerForm" class="auth-form hidden">
       <label for="registerName">Display name</label>
       <input id="registerName" type="text" autocomplete="name" minlength="2" maxlength="60" placeholder="Your name" required>
+
       <label for="registerEmail">Email</label>
       <input id="registerEmail" type="email" autocomplete="email" maxlength="320" placeholder="you@example.com" required>
+
       <label for="registerPassword">Password</label>
       <input id="registerPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+
       <label for="registerPasswordConfirm">Confirm password</label>
       <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+
       <p class="auth-hint">Use at least 12 characters. Do not reuse a password from another site.</p>
       <button id="registerSubmit" type="submit" class="auth-submit">CREATE ACCOUNT</button>
     </form>
+
     <div class="auth-divider"><span>SECURE ACCOUNT ACCESS</span></div>
     <p class="auth-terms">By continuing, you agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>.</p>
     <div class="auth-footer">© 2026 EliteHostX. All rights reserved.</div>
@@ -56,8 +72,13 @@
 <div id="appDashboard" class="hidden">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-icon logo-brand"><img src="/images/elitehostx-logo.png" alt="EliteHostX"></div>
-      <div><h2>EliteHost<span>X</span></h2><p class="subtitle">PREMIUM GAME HOSTING</p></div>
+      <div class="brand-icon logo-brand">
+        <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+      </div>
+      <div>
+        <h2>EliteHost<span>X</span></h2>
+        <p class="subtitle">PREMIUM GAME HOSTING</p>
+      </div>
     </div>
 
     <div class="menu-section">
@@ -81,15 +102,27 @@
     </div>
 
     <div class="sidebar-bottom">
-      <div class="support-box"><span class="support-icon">✦</span><strong>Need help?</strong><p>Visit the support section to find assistance.</p><button type="button" class="sidebar-support-button" data-go="support">OPEN SUPPORT</button></div>
+      <div class="support-box">
+        <span class="support-icon">✦</span>
+        <strong>Need help?</strong>
+        <p>Visit the support section to find assistance.</p>
+        <button type="button" class="sidebar-support-button" data-go="support">OPEN SUPPORT</button>
+      </div>
       <div class="version">ELITEHOSTX PANEL · V1.3.0</div>
     </div>
   </aside>
 
   <main class="main-content">
     <header class="topbar">
-      <div class="mobile-brand"><img src="/images/elitehostx-logo.png" alt="EliteHostX"></div>
-      <div><h1 id="pageTitle">Dashboard</h1><p id="pageDescription">Welcome back to EliteHostX.</p></div>
+      <div class="mobile-brand">
+        <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+      </div>
+
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageDescription">Welcome back to EliteHostX.</p>
+      </div>
+
       <div class="topbar-right">
         <div class="system-status"><span class="status-dot"></span>SYSTEM ONLINE</div>
         <div class="profile" id="profileAvatar">E</div>
@@ -106,48 +139,131 @@
           <p>Powerful hosting plans. Everything you need in one place.</p>
           <button type="button" class="primary-button" id="heroCreate">＋ CREATE YOUR SERVER</button>
         </div>
-        <div class="hero-decoration"><div class="hero-circle"><img src="/images/elitehostx-logo.png" alt="EliteHostX"></div></div>
-      </section>
-      <section class="statistics-section">
-        <div class="section-heading"><h2>Account Overview</h2><p>Your hosting statistics</p></div>
-        <div class="stats">
-          <article class="stat-card"><div class="stat-icon">▣</div><span>Total Servers</span><h2 id="totalServers">0</h2><small>Configured servers</small></article>
-          <article class="stat-card"><div class="stat-icon">◉</div><span>Active Servers</span><h2 id="activeServers">0</h2><small>Requires server integration</small></article>
-          <article class="stat-card"><div class="stat-icon">▤</div><span>Allocated RAM</span><h2 id="totalRam">0 GB</h2><small>Total selected memory</small></article>
+        <div class="hero-decoration">
+          <div class="hero-circle">
+            <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+          </div>
         </div>
       </section>
+
+      <section class="statistics-section">
+        <div class="section-heading">
+          <h2>Account Overview</h2>
+          <p>Your hosting statistics</p>
+        </div>
+
+        <div class="stats">
+          <article class="stat-card">
+            <div class="stat-icon">▣</div>
+            <span>Total Servers</span>
+            <h2 id="totalServers">0</h2>
+            <small>Configured servers</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">◉</div>
+            <span>Active Servers</span>
+            <h2 id="activeServers">0</h2>
+            <small>Requires server integration</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-icon">▤</div>
+            <span>Allocated RAM</span>
+            <h2 id="totalRam">0 GB</h2>
+            <small>Total selected memory</small>
+          </article>
+        </div>
+      </section>
+
       <section class="dashboard-shortcuts">
-        <div class="section-heading"><h2>Quick access</h2><p>Go directly to a panel category.</p></div>
+        <div class="section-heading">
+          <h2>Quick access</h2>
+          <p>Go directly to a panel category.</p>
+        </div>
+
         <div class="shortcut-grid">
-          <button type="button" class="shortcut-card" data-go="my-servers"><span>▣</span><strong>My Servers</strong><small>View your configurations</small></button>
-          <button type="button" class="shortcut-card" data-go="hosting-plans"><span>♛</span><strong>Hosting Plans</strong><small>Compare available plans</small></button>
-          <button type="button" class="shortcut-card" data-go="settings"><span>⚙</span><strong>Settings</strong><small>Account preferences</small></button>
+          <button type="button" class="shortcut-card" data-go="my-servers">
+            <span>▣</span>
+            <strong>My Servers</strong>
+            <small>View your configurations</small>
+          </button>
+
+          <button type="button" class="shortcut-card" data-go="hosting-plans">
+            <span>♛</span>
+            <strong>Hosting Plans</strong>
+            <small>Compare available plans</small>
+          </button>
+
+          <button type="button" class="shortcut-card" data-go="settings">
+            <span>⚙</span>
+            <strong>Settings</strong>
+            <small>Account preferences</small>
+          </button>
         </div>
       </section>
     </section>
 
     <section class="page-section" id="section-my-servers" data-title="My Servers" data-description="View the servers configured in your account.">
-      <div class="section-header"><div><h2>My Servers</h2><p>Manage your Minecraft server configurations.</p></div><button type="button" class="primary-button" data-go="create-server">＋ CREATE SERVER</button></div>
-      <div class="empty" id="serverContainer"><div class="empty-icon">▣</div><h2>No servers yet</h2><p>You haven't created any Minecraft servers. Start by creating your first one.</p><button type="button" class="primary-button" data-go="create-server">CREATE MY FIRST SERVER</button></div>
+      <div class="section-header">
+        <div>
+          <h2>My Servers</h2>
+          <p>Manage your Minecraft server configurations.</p>
+        </div>
+        <button type="button" class="primary-button" data-go="create-server">＋ CREATE SERVER</button>
+      </div>
+
+      <div class="empty" id="serverContainer">
+        <div class="empty-icon">▣</div>
+        <h2>No servers yet</h2>
+        <p>You haven't created any Minecraft servers. Start by creating your first one.</p>
+        <button type="button" class="primary-button" data-go="create-server">CREATE MY FIRST SERVER</button>
+      </div>
     </section>
 
     <section class="page-section" id="section-hosting-plans" data-title="Hosting Plans" data-description="Compare the resources available in each plan.">
-      <div class="section-heading"><h2>Choose your power</h2><p>Prices will be announced soon. Plan cards are a catalog; server provisioning is not connected yet.</p></div>
+      <div class="section-heading">
+        <h2>Choose your power</h2>
+        <p>Prices will be announced soon. Plan cards are a catalog; server provisioning is not connected yet.</p>
+      </div>
       <div class="plans-grid" id="plansGrid"></div>
     </section>
 
     <section class="page-section" id="section-create-server" data-title="Create Server" data-description="Configure a server request using one of our hosting plans.">
       <div class="content-card create-panel">
-        <div class="section-heading"><h2>Create a Minecraft server</h2><p>Choose a name, software, version and hosting plan.</p></div>
+        <div class="section-heading">
+          <h2>Create a Minecraft server</h2>
+          <p>Choose a name, software, version and hosting plan.</p>
+        </div>
+
         <form id="serverForm" class="create-form">
           <label for="serverName">Server Name</label>
           <input id="serverName" type="text" placeholder="My Minecraft Server" maxlength="40" required>
+
           <div class="form-row">
-            <div><label for="serverSoftware">Server Software</label><select id="serverSoftware"><option value="Paper">Paper</option><option value="Purpur">Purpur</option><option value="Vanilla">Vanilla</option><option value="Spigot">Spigot</option></select></div>
-            <div><label for="serverVersion">Minecraft Version</label><select id="serverVersion"><option value="1.21.11">1.21.11</option><option value="1.21.10">1.21.10</option><option value="1.21.8">1.21.8</option></select></div>
+            <div>
+              <label for="serverSoftware">Server Software</label>
+              <select id="serverSoftware">
+                <option value="Paper">Paper</option>
+                <option value="Purpur">Purpur</option>
+                <option value="Vanilla">Vanilla</option>
+                <option value="Spigot">Spigot</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="serverVersion">Minecraft Version</label>
+              <select id="serverVersion">
+                <option value="1.21.11">1.21.11</option>
+                <option value="1.21.10">1.21.10</option>
+                <option value="1.21.8">1.21.8</option>
+              </select>
+            </div>
           </div>
+
           <label>Choose a hosting plan</label>
           <div class="plan-choice" id="planChoice"></div>
+
           <button type="submit" class="create-submit">✦ SAVE SERVER CONFIGURATION</button>
           <p class="modal-note">Demo mode: this saves a configuration in this browser. It does not create a real Minecraft instance yet.</p>
         </form>
@@ -155,172 +271,308 @@
     </section>
 
     <section class="page-section" id="section-file-manager" data-title="File Manager" data-description="File access will be available after server-node integration.">
-      <div class="content-card integration-card"><div class="integration-icon">▤</div><h2>File Manager</h2><p>The file manager needs a connected game-server panel (such as Pterodactyl) and a real server instance.</p><span class="integration-status">NOT CONNECTED YET</span><button type="button" class="secondary-button" data-go="my-servers">VIEW MY SERVERS</button></div>
+      <div class="content-card integration-card">
+        <div class="integration-icon">▤</div>
+        <h2>File Manager</h2>
+        <p>The file manager needs a connected game-server panel (such as Pterodactyl) and a real server instance.</p>
+        <span class="integration-status">NOT CONNECTED YET</span>
+        <button type="button" class="secondary-button" data-go="my-servers">VIEW MY SERVERS</button>
+      </div>
     </section>
 
     <section class="page-section" id="section-console" data-title="Console" data-description="Live server console requires a connected game-server node.">
-      <div class="content-card integration-card"><div class="integration-icon">⌘</div><h2>Server Console</h2><p>Live console commands and server logs will work after the Pterodactyl/Wings integration is configured.</p><span class="integration-status">NOT CONNECTED YET</span><button type="button" class="secondary-button" data-go="my-servers">VIEW MY SERVERS</button></div>
+      <div class="content-card integration-card">
+        <div class="integration-icon">⌘</div>
+        <h2>Server Console</h2>
+        <p>Live console commands and server logs will work after the Pterodactyl/Wings integration is configured.</p>
+        <span class="integration-status">NOT CONNECTED YET</span>
+        <button type="button" class="secondary-button" data-go="my-servers">VIEW MY SERVERS</button>
+      </div>
     </section>
 
     <section class="page-section" id="section-settings" data-title="Settings" data-description="Manage the preferences displayed in your account.">
       <div class="content-card settings-card">
-        <div class="section-heading"><h2>Account settings</h2><p>These preferences are saved in this browser.</p></div>
-        <div class="setting-row"><div><strong>Display name</strong><p id="settingsCurrentName">Your account name</p></div><button type="button" class="secondary-button" id="changeNameButton">CHANGE NAME</button></div>
-        <div class="setting-row"><div><strong>Email address</strong><p id="settingsEmail">Your account email</p></div><span class="setting-readonly">MANAGED BY ACCOUNT</span></div>
-        <div class="setting-row"><div><strong>Session</strong><p>Sign out of your EliteHostX account on this browser.</p></div><button type="button" class="danger-button" id="settingsLogout">LOG OUT</button></div>
+        <div class="section-heading">
+          <h2>Account settings</h2>
+          <p>These preferences are saved in this browser.</p>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <strong>Display name</strong>
+            <p id="settingsCurrentName">Your account name</p>
+          </div>
+          <button type="button" class="secondary-button" id="changeNameButton">CHANGE NAME</button>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <strong>Email address</strong>
+            <p id="settingsEmail">Your account email</p>
+          </div>
+          <span class="setting-readonly">MANAGED BY ACCOUNT</span>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <strong>Session</strong>
+            <p>Sign out of your EliteHostX account on this browser.</p>
+          </div>
+          <button type="button" class="danger-button" id="settingsLogout">LOG OUT</button>
+        </div>
       </div>
     </section>
 
-    <section class="page-section" id="section-support"
-  data-title="EliteAI Support"
-  data-description="Get help from your EliteHostX AI assistant.">
+    <!-- ELITEHOSTX SUPPORT CENTER -->
+    <section
+      class="page-section"
+      id="section-support"
+      data-title="Support Center"
+      data-description="Contact the EliteHostX support team."
+    >
 
-  <div class="support-header">
-    <div>
-      <span class="support-kicker">✦ ELITEHOSTX INTELLIGENCE</span>
-      <h2>EliteAI <span>Support</span></h2>
-      <p>Your personal hosting assistant and support center.</p>
-    </div>
-    <div class="eliteai-status">
-      <span class="status-dot"></span>
-      ELITEAI SYSTEM
-    </div>
-  </div>
+      <div class="support-header">
+        <div class="support-header-content">
+          <span class="support-kicker">✦ ELITEHOSTX CUSTOMER CARE</span>
+          <h2>Support <span>Center</span></h2>
+          <p>Open a support conversation and get help from our team.</p>
+        </div>
 
-  <div class="support-tabs">
-    <button type="button" class="support-tab active" data-support-view="chat">
-      ✦ AI ASSISTANT
-    </button>
-    <button type="button" class="support-tab" data-support-view="tickets">
-      ◈ MY TICKETS
-    </button>
-    <button type="button" class="support-tab hidden" id="adminSupportTab"
-      data-support-view="admin">
-      ♛ ADMIN PANEL
-    </button>
-  </div>
+        <div class="support-header-status">
+          <span class="status-dot"></span>
+          SUPPORT CENTER
+        </div>
+      </div>
 
-  <div id="supportNotice" class="support-notice hidden" role="status"></div>
-
-  <!-- AI CHAT -->
-  <div class="support-view active" id="supportChatView">
-    <div class="support-chat-layout">
-
-      <aside class="support-conversations">
-        <div class="support-side-heading">
+      <div class="support-overview">
+        <article class="support-overview-card">
+          <span class="support-overview-icon">◈</span>
           <div>
-            <strong>Conversations</strong>
-            <small>Your AI chat history</small>
+            <strong>Personal assistance</strong>
+            <p>Every request has its own conversation.</p>
           </div>
-          <button type="button" id="newAIConversation" title="New conversation">＋</button>
-        </div>
+        </article>
 
-        <div id="aiConversationList" class="ai-conversation-list">
-          <p class="support-loading">Loading conversations...</p>
-        </div>
-
-        <div class="ai-sidebar-footer">
-          <span>✦</span>
-          EliteAI · Custom assistant
-        </div>
-      </aside>
-
-      <div class="support-chat-panel">
-        <div class="support-chat-heading">
-          <div class="ai-avatar">✦</div>
+        <article class="support-overview-card">
+          <span class="support-overview-icon">⌁</span>
           <div>
-            <strong>EliteAI Assistant</strong>
-            <small><span class="status-dot"></span> Ready to help</small>
+            <strong>Direct communication</strong>
+            <p>Talk directly with the support team.</p>
           </div>
-        </div>
+        </article>
 
-        <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite">
-          <div class="ai-welcome-message">
-            <div class="ai-welcome-icon">✦</div>
-            <h3>Welcome to EliteAI</h3>
-            <p>Ask me about EliteHostX, hosting plans, your account or support.</p>
-            <span>How can I help you today?</span>
+        <article class="support-overview-card">
+          <span class="support-overview-icon">✓</span>
+          <div>
+            <strong>Ticket tracking</strong>
+            <p>Follow replies and ticket status.</p>
           </div>
-        </div>
+        </article>
+      </div>
 
-        <form id="aiChatForm" class="ai-chat-form">
-          <input
-            id="aiChatInput"
-            type="text"
-            maxlength="2000"
-            placeholder="Ask EliteAI a question..."
-            autocomplete="off"
-            required
+      <div class="support-tabs">
+        <button
+          type="button"
+          class="support-tab active"
+          data-support-view="tickets"
+        >
+          ◈ MY CONVERSATIONS
+        </button>
+
+        <button
+          type="button"
+          class="support-tab hidden"
+          id="adminSupportTab"
+          data-support-view="admin"
+        >
+          ♛ ADMIN PANEL
+        </button>
+      </div>
+
+      <div id="supportNotice" class="support-notice hidden" role="status"></div>
+
+      <!-- USER SUPPORT CONVERSATIONS -->
+      <div class="support-view active" id="supportTicketsView">
+
+        <div class="support-workspace-heading">
+          <div>
+            <span class="support-kicker">YOUR SUPPORT REQUESTS</span>
+            <h3>My conversations</h3>
+            <p>Each ticket has its own private conversation with our team.</p>
+          </div>
+
+          <button
+            type="button"
+            class="support-new-ticket-button"
+            id="openNewTicket"
           >
-          <button type="submit" id="aiSendButton" aria-label="Send message">
-            SEND <span>➤</span>
+            <span>＋</span> NEW TICKET
           </button>
-        </form>
+        </div>
 
-        <p class="ai-chat-disclaimer">
-          EliteAI uses EliteHostX's verified knowledge base. Unresolved questions can become support tickets.
-        </p>
-      </div>
-    </div>
-  </div>
+        <!-- NEW TICKET FORM -->
+        <div class="support-new-ticket hidden" id="newTicketPanel">
+          <div class="support-new-ticket-heading">
+            <div>
+              <span class="support-kicker">NEW REQUEST</span>
+              <h3>Create a support ticket</h3>
+              <p>Select the category that best describes your issue.</p>
+            </div>
 
-  <!-- USER TICKETS -->
-  <div class="support-view hidden" id="supportTicketsView">
-    <div class="support-view-heading">
-      <div>
-        <h3>My support tickets</h3>
-        <p>Track your requests and replies from the support team.</p>
-      </div>
-      <button type="button" class="secondary-button" id="refreshMyTickets">
-        ↻ REFRESH
-      </button>
-    </div>
+            <button
+              type="button"
+              class="support-close-button"
+              id="closeNewTicket"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
 
-    <div class="support-ticket-layout">
-      <div id="myTicketList" class="support-ticket-list">
-        <p class="support-loading">Loading tickets...</p>
-      </div>
+          <form id="newTicketForm" class="support-ticket-form">
+            <label for="ticketCategory">Support category</label>
 
-      <div id="myTicketDetail" class="support-ticket-detail">
-        <div class="ticket-empty">
-          <span>◈</span>
-          <h3>Select a ticket</h3>
-          <p>Choose a ticket to view its messages.</p>
+            <select id="ticketCategory" name="category" required>
+              <option value="">Select a category</option>
+              <option value="account">Account & Login</option>
+              <option value="billing">Billing & Payments</option>
+              <option value="hosting">Hosting Plans</option>
+              <option value="server">Minecraft Server</option>
+              <option value="technical">Technical Support</option>
+              <option value="other">Other</option>
+            </select>
+
+            <label for="ticketSubject">Subject</label>
+            <input
+              id="ticketSubject"
+              name="subject"
+              type="text"
+              maxlength="120"
+              placeholder="Briefly describe your issue"
+              required
+            >
+
+            <label for="ticketInitialMessage">Message</label>
+            <textarea
+              id="ticketInitialMessage"
+              name="message"
+              rows="5"
+              maxlength="5000"
+              placeholder="Explain how we can help you..."
+              required
+            ></textarea>
+
+            <div class="support-form-footer">
+              <p>Your ticket will be visible to you and the authorized support team.</p>
+              <button type="submit" class="support-submit-button" id="createTicketButton">
+                CREATE CONVERSATION <span>➤</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TICKET CHAT WORKSPACE -->
+        <div class="support-ticket-layout">
+
+          <aside class="support-ticket-sidebar">
+            <div class="support-ticket-sidebar-heading">
+              <div>
+                <strong>Your tickets</strong>
+                <small>Conversations and replies</small>
+              </div>
+
+              <button
+                type="button"
+                id="refreshMyTickets"
+                class="support-refresh-button"
+                title="Refresh tickets"
+              >
+                ↻
+              </button>
+            </div>
+
+            <div id="myTicketList" class="support-ticket-list">
+              <div class="support-loading">
+                Loading conversations...
+              </div>
+            </div>
+          </aside>
+
+          <div id="myTicketDetail" class="support-ticket-detail">
+            <div class="ticket-empty">
+              <div class="ticket-empty-icon">◈</div>
+              <h3>Your support conversations</h3>
+              <p>Select a conversation from the list or create a new ticket to get started.</p>
+              <button type="button" class="secondary-button" data-open-ticket-form>
+                ＋ CREATE A TICKET
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ADMIN SUPPORT -->
-  <div class="support-view hidden" id="supportAdminView">
-    <div class="support-view-heading">
-      <div>
-        <h3>Support administration</h3>
-        <p>Review user requests and respond to support tickets.</p>
-      </div>
-      <button type="button" class="secondary-button" id="refreshAdminTickets">
-        ↻ REFRESH
-      </button>
-    </div>
+      <!-- ADMIN SUPPORT CENTER -->
+      <div class="support-view hidden" id="supportAdminView">
 
-    <div class="admin-support-layout">
-      <div id="adminTicketList" class="support-ticket-list">
-        <p class="support-loading">Loading support queue...</p>
-      </div>
+        <div class="support-workspace-heading">
+          <div>
+            <span class="support-kicker">STAFF WORKSPACE</span>
+            <h3>Support administration</h3>
+            <p>Manage customer conversations and respond to open tickets.</p>
+          </div>
 
-      <div id="adminTicketDetail" class="support-ticket-detail">
-        <div class="ticket-empty">
-          <span>♛</span>
-          <h3>Support control center</h3>
-          <p>Select a ticket to review and answer it.</p>
+          <button
+            type="button"
+            class="secondary-button"
+            id="refreshAdminTickets"
+          >
+            ↻ REFRESH QUEUE
+          </button>
+        </div>
+
+        <div class="admin-support-layout">
+          <aside class="support-ticket-sidebar">
+            <div class="support-ticket-sidebar-heading">
+              <div>
+                <strong>Support queue</strong>
+                <small>All customer tickets</small>
+              </div>
+              <span class="admin-queue-indicator">LIVE QUEUE</span>
+            </div>
+
+            <div id="adminTicketList" class="support-ticket-list">
+              <div class="support-loading">
+                Loading support queue...
+              </div>
+            </div>
+          </aside>
+
+          <div id="adminTicketDetail" class="support-ticket-detail">
+            <div class="ticket-empty">
+              <div class="ticket-empty-icon">♛</div>
+              <h3>Support control center</h3>
+              <p>Select a customer conversation to review its messages and reply.</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-</section>
+      <div class="support-footer-note">
+        <span>✦</span>
+        <p>EliteHostX Support · Your hosting experience matters to us.</p>
+      </div>
 
-    <footer><div class="footer-brand"><img src="/images/elitehostx-logo.png" alt="EliteHostX"><span>EliteHostX</span></div><p>© 2026 EliteHostX. All rights reserved.</p><p>POWERED BY ELITEHOSTX</p></footer>
+    </section>
+
+    <footer>
+      <div class="footer-brand">
+        <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+        <span>EliteHostX</span>
+      </div>
+      <p>© 2026 EliteHostX. All rights reserved.</p>
+      <p>POWERED BY ELITEHOSTX</p>
+    </footer>
   </main>
 </div>
 

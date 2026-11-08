@@ -1,3 +1,4 @@
+
 "use strict";
 
 const authScreen = document.getElementById("authScreen");
@@ -15,6 +16,15 @@ const HOSTING_PLANS = [
   { id: "rubi", name: "RUBÍ", ram: 32, cpu: 12, disk: 320, color: "#ff718b", glow: "#e85d75", gem: "ruby" },
   { id: "amatista", name: "AMATISTA", ram: 48, cpu: 16, disk: 480, color: "#c49aff", glow: "#a879ed", gem: "amethyst" }
 ];
+
+const SUPPORT_CATEGORIES = {
+  account: "Account & Login",
+  billing: "Billing & Payments",
+  hosting: "Hosting Plans",
+  server: "Minecraft Server",
+  technical: "Technical Support",
+  other: "Other"
+};
 
 const SECTION_INFO = {
   dashboard: {
@@ -46,8 +56,8 @@ const SECTION_INFO = {
     description: "Manage your account preferences."
   },
   support: {
-    title: "EliteAI Support",
-    description: "Get help from your EliteHostX AI assistant."
+    title: "Support Center",
+    description: "Contact the EliteHostX support team."
   }
 };
 
@@ -610,13 +620,13 @@ function renderServers() {
   });
 }
 
-/* --------------------------------
-   ELITEAI SUPPORT CENTER
--------------------------------- */
+/* ================================================
+   ELITEHOSTX SUPPORT CENTER
+   Ticket-based conversations. No AI assistant.
+================================================ */
 
 let supportInitialized = false;
 let supportAdmin = false;
-let currentConversationId = null;
 let currentUserTicketId = null;
 let currentAdminTicketId = null;
 
@@ -641,29 +651,12 @@ async function supportRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data.error || `Support request failed (${response.status}).`);
+    throw new Error(
+      data.error || `Support request failed (${response.status}).`
+    );
   }
 
   return data;
-}
-
-function showSupportNotice(message, type = "info") {
-  const notice = document.getElementById("supportNotice");
-
-  if (!notice) return;
-
-  notice.textContent = message;
-  notice.className = `support-notice ${type}`;
-  notice.classList.remove("hidden");
-}
-
-function clearSupportNotice() {
-  const notice = document.getElementById("supportNotice");
-
-  if (!notice) return;
-
-  notice.textContent = "";
-  notice.className = "support-notice hidden";
 }
 
 function escapeSupportHTML(value) {
@@ -689,40 +682,54 @@ function formatSupportDate(value) {
   });
 }
 
-function switchSupportView(view) {
-  if (view === "admin" && !supportAdmin) {
-    showSupportNotice("You do not have permission to access the administration panel.", "error");
-    return;
-  }
+function showSupportNotice(message, type = "info") {
+  const notice = document.getElementById("supportNotice");
 
-  const views = {
-    chat: document.getElementById("supportChatView"),
-    tickets: document.getElementById("supportTicketsView"),
-    admin: document.getElementById("supportAdminView")
+  if (!notice) return;
+
+  notice.textContent = message;
+  notice.className = `support-notice ${type}`;
+  notice.classList.remove("hidden");
+}
+
+function clearSupportNotice() {
+  const notice = document.getElementById("supportNotice");
+
+  if (!notice) return;
+
+  notice.textContent = "";
+  notice.className = "support-notice hidden";
+}
+
+function getCategoryName(category) {
+  return SUPPORT_CATEGORIES[category] || "Other";
+}
+
+function getStatusName(status) {
+  const statuses = {
+    open: "Open",
+    answered: "Answered",
+    closed: "Closed",
+    pending: "Pending",
+    in_progress: "In progress"
   };
 
-  Object.entries(views).forEach(([name, element]) => {
-    if (!element) return;
-
-    const active = name === view;
-    element.classList.toggle("hidden", !active);
-    element.classList.toggle("active", active);
-  });
-
-  document.querySelectorAll("[data-support-view]").forEach(button => {
-    button.classList.toggle("active", button.dataset.supportView === view);
-  });
-
-  clearSupportNotice();
-
-  if (view === "tickets") {
-    loadMyTickets();
-  }
-
-  if (view === "admin" && supportAdmin) {
-    loadAdminTickets();
-  }
+  return statuses[status] || status || "Open";
 }
+
+function getPriorityName(priority) {
+  const priorities = {
+    low: "Low",
+    normal: "Normal",
+    high: "High"
+  };
+
+  return priorities[priority] || "Normal";
+}
+
+/* --------------------------------
+   SUPPORT INITIALIZATION
+-------------------------------- */
 
 function bindSupportEvents() {
   if (supportInitialized) return;
@@ -735,12 +742,23 @@ function bindSupportEvents() {
     });
   });
 
-  document.getElementById("newAIConversation").addEventListener("click", createAIConversation);
+  const newTicketButton = document.getElementById("openNewTicket");
+  const closeTicketButton = document.getElementById("closeNewTicket");
+  const newTicketForm = document.getElementById("newTicketForm");
 
-  document.getElementById("aiChatForm").addEventListener("submit", sendAIMessage);
+  newTicketButton?.addEventListener("click", openNewTicketForm);
+  closeTicketButton?.addEventListener("click", closeNewTicketForm);
+  newTicketForm?.addEventListener("submit", createSupportTicket);
 
-  document.getElementById("refreshMyTickets").addEventListener("click", loadMyTickets);
-  document.getElementById("refreshAdminTickets").addEventListener("click", loadAdminTickets);
+  document.querySelectorAll("[data-open-ticket-form]").forEach(button => {
+    button.addEventListener("click", openNewTicketForm);
+  });
+
+  document.getElementById("refreshMyTickets")
+    ?.addEventListener("click", loadMyTickets);
+
+  document.getElementById("refreshAdminTickets")
+    ?.addEventListener("click", loadAdminTickets);
 }
 
 async function loadEliteSupport() {
@@ -750,280 +768,175 @@ async function loadEliteSupport() {
   clearSupportNotice();
 
   try {
+    // This endpoint is retained only to determine whether the user is an admin.
     const data = await supportRequest("/status");
 
     supportAdmin = data.admin === true;
 
     const adminTab = document.getElementById("adminSupportTab");
-    adminTab.classList.toggle("hidden", !supportAdmin);
 
-    const statusText = document.querySelector(".eliteai-status");
-
-    if (statusText) {
-      statusText.innerHTML = `
-        <span class="status-dot"></span>
-        ${data.status === "online" ? "ELITEAI ONLINE" : "ELITEAI READY"}
-      `;
+    if (adminTab) {
+      adminTab.classList.toggle("hidden", !supportAdmin);
     }
 
-    await loadConversations();
+    await loadMyTickets();
   } catch (error) {
-    console.error("EliteAI initialization error:", error);
-    showSupportNotice(error.message || "Unable to connect to EliteAI.", "error");
+    console.error("Support initialization error:", error);
+    showSupportNotice(
+      error.message || "Unable to connect to the support center.",
+      "error"
+    );
   }
 }
 
 /* --------------------------------
-   AI CONVERSATIONS
+   SUPPORT VIEW SWITCHING
 -------------------------------- */
 
-async function loadConversations() {
-  const list = document.getElementById("aiConversationList");
-
-  list.innerHTML = `<p class="support-loading">Loading conversations...</p>`;
-
-  try {
-    const data = await supportRequest("/conversations");
-    const conversations = data.conversations || [];
-
-    if (!conversations.length) {
-      currentConversationId = null;
-
-      list.innerHTML = `
-        <div class="support-list-empty">
-          <span>✦</span>
-          <p>No conversations yet.</p>
-          <small>Start a new conversation with EliteAI.</small>
-        </div>
-      `;
-
-      renderAIWelcome();
-      return;
-    }
-
-    if (!currentConversationId ||
-        !conversations.some(item => String(item.id) === String(currentConversationId))) {
-      currentConversationId = conversations[0].id;
-    }
-
-    list.innerHTML = conversations.map(conversation => `
-      <button
-        type="button"
-        class="ai-conversation-item ${String(conversation.id) === String(currentConversationId) ? "active" : ""}"
-        data-conversation-id="${escapeSupportHTML(conversation.id)}"
-      >
-        <span class="conversation-symbol">✦</span>
-        <span class="conversation-copy">
-          <strong>${escapeSupportHTML(conversation.title || "New conversation")}</strong>
-          <small>${escapeSupportHTML(formatSupportDate(conversation.updated_at))}</small>
-        </span>
-      </button>
-    `).join("");
-
-    list.querySelectorAll("[data-conversation-id]").forEach(button => {
-      button.addEventListener("click", () => {
-        currentConversationId = button.dataset.conversationId;
-
-        list.querySelectorAll(".ai-conversation-item").forEach(item => {
-          item.classList.toggle("active", item === button);
-        });
-
-        loadConversationMessages();
-      });
-    });
-
-    await loadConversationMessages();
-  } catch (error) {
-    console.error("Conversation loading error:", error);
-    list.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
-  }
-}
-
-async function createAIConversation() {
-  const button = document.getElementById("newAIConversation");
-
-  button.disabled = true;
-
-  try {
-    const data = await supportRequest("/conversations", {
-      method: "POST",
-      body: JSON.stringify({})
-    });
-
-    currentConversationId = data.conversation.id;
-
-    await loadConversations();
-    document.getElementById("aiChatInput").focus();
-  } catch (error) {
-    showSupportNotice(error.message, "error");
-  } finally {
-    button.disabled = false;
-  }
-}
-
-function renderAIWelcome() {
-  const messages = document.getElementById("aiChatMessages");
-
-  messages.innerHTML = `
-    <div class="ai-welcome-message">
-      <div class="ai-welcome-icon">✦</div>
-      <h3>Welcome to EliteAI</h3>
-      <p>Ask me about EliteHostX, hosting plans, your account or support.</p>
-      <span>How can I help you today?</span>
-    </div>
-  `;
-}
-
-function appendAIMessage(sender, content, createdAt = null) {
-  const messages = document.getElementById("aiChatMessages");
-  const isUser = sender === "user";
-
-  const wrapper = document.createElement("div");
-  wrapper.className = `ai-message ${isUser ? "user-message" : "assistant-message"}`;
-
-  const avatar = document.createElement("div");
-  avatar.className = "ai-message-avatar";
-  avatar.textContent = isUser ? "U" : "✦";
-
-  const body = document.createElement("div");
-  body.className = "ai-message-body";
-
-  const name = document.createElement("strong");
-  name.textContent = isUser ? "You" : "EliteAI";
-
-  const text = document.createElement("p");
-  text.textContent = content;
-
-  const time = document.createElement("small");
-  time.textContent = formatSupportDate(createdAt);
-
-  body.append(name, text, time);
-  wrapper.append(avatar, body);
-  messages.append(wrapper);
-}
-
-async function loadConversationMessages() {
-  const messages = document.getElementById("aiChatMessages");
-
-  if (!currentConversationId) {
-    renderAIWelcome();
+function switchSupportView(view) {
+  if (view === "admin" && !supportAdmin) {
+    showSupportNotice(
+      "You do not have permission to access the administration panel.",
+      "error"
+    );
     return;
   }
 
-  messages.innerHTML = `<p class="support-loading">Loading messages...</p>`;
+  const views = {
+    tickets: document.getElementById("supportTicketsView"),
+    admin: document.getElementById("supportAdminView")
+  };
 
-  try {
-    const data = await supportRequest(
-      `/conversations/${encodeURIComponent(currentConversationId)}/messages`
+  Object.entries(views).forEach(([name, element]) => {
+    if (!element) return;
+
+    const active = name === view;
+
+    element.classList.toggle("hidden", !active);
+    element.classList.toggle("active", active);
+  });
+
+  document.querySelectorAll("[data-support-view]").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.supportView === view
     );
+  });
 
-    messages.innerHTML = "";
+  clearSupportNotice();
 
-    const items = data.messages || [];
-
-    if (!items.length) {
-      renderAIWelcome();
-      return;
-    }
-
-    items.forEach(message => {
-      appendAIMessage(message.sender, message.content, message.created_at);
-    });
-
-    messages.scrollTop = messages.scrollHeight;
-  } catch (error) {
-    console.error("Message loading error:", error);
-    messages.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
+  if (view === "tickets") {
+    loadMyTickets();
   }
-}
 
-async function sendAIMessage(event) {
-  event.preventDefault();
-
-  const input = document.getElementById("aiChatInput");
-  const button = document.getElementById("aiSendButton");
-  const message = input.value.trim();
-
-  if (!message) return;
-
-  button.disabled = true;
-  input.disabled = true;
-
-  try {
-    if (!currentConversationId) {
-      const created = await supportRequest("/conversations", {
-        method: "POST",
-        body: JSON.stringify({})
-      });
-
-      currentConversationId = created.conversation.id;
-    }
-
-    const messages = document.getElementById("aiChatMessages");
-
-    if (messages.querySelector(".ai-welcome-message")) {
-      messages.innerHTML = "";
-    }
-
-    appendAIMessage("user", message, new Date().toISOString());
-
-    input.value = "";
-
-    const typing = document.createElement("div");
-    typing.className = "ai-typing";
-    typing.id = "eliteAITyping";
-    typing.textContent = "EliteAI is thinking...";
-    messages.append(typing);
-    messages.scrollTop = messages.scrollHeight;
-
-    const data = await supportRequest("/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        message,
-        conversationId: currentConversationId
-      })
-    });
-
-    document.getElementById("eliteAITyping")?.remove();
-
-    appendAIMessage(
-      "assistant",
-      data.answer || "I could not generate an answer. Please try again.",
-      new Date().toISOString()
-    );
-
-    if (data.ticket) {
-      showSupportNotice(
-        `A support ticket has been created${data.ticket.id ? ` (#${data.ticket.id})` : ""}. You can follow it in My Tickets.`,
-        "success"
-      );
-    }
-
-    messages.scrollTop = messages.scrollHeight;
-
-    await loadConversations();
-  } catch (error) {
-    document.getElementById("eliteAITyping")?.remove();
-
-    appendAIMessage(
-      "assistant",
-      `I couldn't process your message: ${error.message}. Please try again.`
-    );
-  } finally {
-    button.disabled = false;
-    input.disabled = false;
-    input.focus();
+  if (view === "admin") {
+    loadAdminTickets();
   }
 }
 
 /* --------------------------------
-   USER SUPPORT TICKETS
+   NEW TICKET FORM
+-------------------------------- */
+
+function openNewTicketForm() {
+  const panel = document.getElementById("newTicketPanel");
+
+  if (!panel) return;
+
+  panel.classList.remove("hidden");
+  panel.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+
+  document.getElementById("ticketCategory")?.focus();
+}
+
+function closeNewTicketForm() {
+  const panel = document.getElementById("newTicketPanel");
+
+  if (!panel) return;
+
+  panel.classList.add("hidden");
+}
+
+async function createSupportTicket(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const button = document.getElementById("createTicketButton");
+
+  const category = document.getElementById("ticketCategory").value;
+  const subject = document.getElementById("ticketSubject").value.trim();
+  const message = document.getElementById("ticketInitialMessage").value.trim();
+
+  if (!category || !SUPPORT_CATEGORIES[category]) {
+    showSupportNotice("Please select a valid support category.", "error");
+    return;
+  }
+
+  if (subject.length < 3) {
+    showSupportNotice("The subject must contain at least 3 characters.", "error");
+    return;
+  }
+
+  if (message.length < 5) {
+    showSupportNotice("Please provide a little more detail in your message.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "CREATING TICKET...";
+
+  try {
+    const data = await supportRequest("/tickets", {
+      method: "POST",
+      body: JSON.stringify({
+        category,
+        subject,
+        message
+      })
+    });
+
+    const ticket = data.ticket;
+
+    if (!ticket || !ticket.id) {
+      throw new Error("The server did not return the new ticket.");
+    }
+
+    currentUserTicketId = ticket.id;
+
+    form.reset();
+    closeNewTicketForm();
+
+    await loadMyTickets();
+
+    showSupportNotice(
+      `Ticket #${ticket.id} created successfully. You can now chat with our support team.`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Ticket creation error:", error);
+    showSupportNotice(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.innerHTML = 'CREATE CONVERSATION <span>➤</span>';
+  }
+}
+
+/* --------------------------------
+   USER TICKET LIST
 -------------------------------- */
 
 async function loadMyTickets() {
-  const list = document.getElementById("myTicketList");
+  if (!currentUser) return;
 
-  list.innerHTML = `<p class="support-loading">Loading your tickets...</p>`;
+  const list = document.getElementById("myTicketList");
+  const detail = document.getElementById("myTicketDetail");
+
+  if (!list || !detail) return;
+
+  list.innerHTML = `<p class="support-loading">Loading conversations...</p>`;
 
   try {
     const data = await supportRequest("/tickets");
@@ -1035,24 +948,34 @@ async function loadMyTickets() {
       list.innerHTML = `
         <div class="support-list-empty">
           <span>◈</span>
-          <p>You don't have any tickets yet.</p>
-          <small>If EliteAI cannot resolve a question, it can create a ticket for you.</small>
+          <p>No conversations yet.</p>
+          <small>Create a ticket to contact the EliteHostX support team.</small>
         </div>
       `;
 
-      document.getElementById("myTicketDetail").innerHTML = `
+      detail.innerHTML = `
         <div class="ticket-empty">
-          <span>◈</span>
-          <h3>No support requests</h3>
-          <p>Your support tickets will appear here.</p>
+          <div class="ticket-empty-icon">◈</div>
+          <h3>Your support conversations</h3>
+          <p>Create a ticket to start a private conversation with our team.</p>
+          <button type="button" class="secondary-button" data-open-ticket-form>
+            ＋ CREATE A TICKET
+          </button>
         </div>
       `;
+
+      detail.querySelector("[data-open-ticket-form]")
+        ?.addEventListener("click", openNewTicketForm);
 
       return;
     }
 
-    if (!currentUserTicketId ||
-        !tickets.some(ticket => String(ticket.id) === String(currentUserTicketId))) {
+    if (
+      !currentUserTicketId ||
+      !tickets.some(ticket =>
+        String(ticket.id) === String(currentUserTicketId)
+      )
+    ) {
       currentUserTicketId = tickets[0].id;
     }
 
@@ -1063,10 +986,20 @@ async function loadMyTickets() {
         data-ticket-id="${escapeSupportHTML(ticket.id)}"
       >
         <span class="ticket-item-top">
-          <strong>#${escapeSupportHTML(ticket.id)} · ${escapeSupportHTML(ticket.subject)}</strong>
-          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">${escapeSupportHTML(ticket.status)}</span>
+          <strong>${escapeSupportHTML(ticket.subject)}</strong>
+          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+            ${escapeSupportHTML(getStatusName(ticket.status))}
+          </span>
         </span>
-        <small>${escapeSupportHTML(formatSupportDate(ticket.updated_at || ticket.created_at))}</small>
+
+        <span class="support-ticket-category">
+          ${escapeSupportHTML(getCategoryName(ticket.category))}
+        </span>
+
+        <small>
+          #${escapeSupportHTML(ticket.id)}
+          · ${escapeSupportHTML(formatSupportDate(ticket.updated_at || ticket.created_at))}
+        </small>
       </button>
     `).join("");
 
@@ -1085,15 +1018,23 @@ async function loadMyTickets() {
     await loadUserTicketDetail();
   } catch (error) {
     console.error("Ticket loading error:", error);
-    list.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
+
+    list.innerHTML = `
+      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+    `;
   }
 }
+
+/* --------------------------------
+   USER TICKET CHAT
+-------------------------------- */
 
 async function loadUserTicketDetail() {
   if (!currentUserTicketId) return;
 
   const detail = document.getElementById("myTicketDetail");
-  detail.innerHTML = `<p class="support-loading">Loading ticket...</p>`;
+
+  detail.innerHTML = `<p class="support-loading">Loading conversation...</p>`;
 
   try {
     const data = await supportRequest(
@@ -1103,37 +1044,78 @@ async function loadUserTicketDetail() {
     const ticket = data.ticket;
     const messages = data.messages || [];
 
+    if (!ticket) {
+      throw new Error("Ticket not found.");
+    }
+
     detail.innerHTML = `
       <div class="ticket-detail-heading">
         <div>
-          <span class="support-kicker">SUPPORT REQUEST #${escapeSupportHTML(ticket.id)}</span>
+          <span class="support-kicker">
+            SUPPORT TICKET #${escapeSupportHTML(ticket.id)}
+          </span>
+
           <h3>${escapeSupportHTML(ticket.subject)}</h3>
-          <p>Created ${escapeSupportHTML(formatSupportDate(ticket.created_at))}</p>
+
+          <p>
+            ${escapeSupportHTML(getCategoryName(ticket.category))}
+            · Created ${escapeSupportHTML(formatSupportDate(ticket.created_at))}
+          </p>
         </div>
-        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">${escapeSupportHTML(ticket.status)}</span>
+
+        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+          ${escapeSupportHTML(getStatusName(ticket.status))}
+        </span>
       </div>
 
-      <div class="ticket-message-list" id="userTicketMessages"></div>
+      <div class="ticket-chat-info">
+        <span>✦</span>
+        <div>
+          <strong>EliteHostX Support</strong>
+          <small>Private ticket conversation</small>
+        </div>
+      </div>
 
-      ${ticket.status === "closed" ? `
-        <div class="ticket-closed-note">This ticket is closed. Contact support through a new request if you need more help.</div>
-      ` : `
-        <form id="userTicketReplyForm" class="ticket-reply-form">
-          <textarea id="userTicketReply" maxlength="4000" placeholder="Write your reply..." required></textarea>
-          <button type="submit" class="create-submit">SEND REPLY</button>
-        </form>
-      `}
+      <div class="ticket-message-list" id="userTicketMessages" aria-live="polite"></div>
+
+      ${
+        ticket.status === "closed"
+          ? `
+            <div class="ticket-closed-note">
+              This conversation is closed. Create a new ticket if you need more assistance.
+            </div>
+          `
+          : `
+            <form id="userTicketReplyForm" class="ticket-reply-form">
+              <textarea
+                id="userTicketReply"
+                maxlength="4000"
+                rows="3"
+                placeholder="Write your message..."
+                required
+              ></textarea>
+
+              <button type="submit" class="support-submit-button">
+                SEND MESSAGE <span>➤</span>
+              </button>
+            </form>
+          `
+      }
     `;
 
     const messageList = document.getElementById("userTicketMessages");
 
     if (!messages.length) {
-      messageList.innerHTML = `<p class="support-loading">No messages yet.</p>`;
+      messageList.innerHTML = `
+        <p class="support-loading">No messages in this conversation yet.</p>
+      `;
     } else {
       messages.forEach(message => {
-        appendTicketMessage(messageList, message);
+        appendTicketMessage(messageList, message, "user");
       });
     }
+
+    messageList.scrollTop = messageList.scrollHeight;
 
     const form = document.getElementById("userTicketReplyForm");
 
@@ -1142,18 +1124,36 @@ async function loadUserTicketDetail() {
     }
   } catch (error) {
     console.error("Ticket detail error:", error);
-    detail.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
+
+    detail.innerHTML = `
+      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+    `;
   }
 }
 
-function appendTicketMessage(container, message) {
-  const item = document.createElement("article");
-  const isAdmin = message.sender_type === "admin";
+/* --------------------------------
+   TICKET MESSAGE RENDERING
+-------------------------------- */
 
-  item.className = `ticket-message ${isAdmin ? "ticket-admin-message" : "ticket-user-message"}`;
+function appendTicketMessage(container, message, viewer = "user") {
+  const item = document.createElement("article");
+
+  const isAdmin = message.sender_type === "admin";
+  const isOwnMessage = viewer === "user" ? !isAdmin : isAdmin;
+
+  item.className = [
+    "ticket-message",
+    isAdmin ? "ticket-admin-message" : "ticket-user-message",
+    isOwnMessage ? "ticket-own-message" : "ticket-other-message"
+  ].join(" ");
 
   const heading = document.createElement("strong");
-  heading.textContent = isAdmin ? "EliteHostX Support" : "You";
+
+  heading.textContent = isAdmin
+    ? "EliteHostX Support"
+    : (viewer === "admin"
+      ? (message.sender_name || "Customer")
+      : "You");
 
   const content = document.createElement("p");
   content.textContent = message.content;
@@ -1165,6 +1165,10 @@ function appendTicketMessage(container, message) {
   container.append(item);
 }
 
+/* --------------------------------
+   USER REPLY
+-------------------------------- */
+
 async function sendUserTicketReply(event) {
   event.preventDefault();
 
@@ -1174,7 +1178,10 @@ async function sendUserTicketReply(event) {
 
   if (!content || !currentUserTicketId) return;
 
-  if (button) button.disabled = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SENDING...";
+  }
 
   try {
     await supportRequest(
@@ -1187,21 +1194,29 @@ async function sendUserTicketReply(event) {
 
     await loadUserTicketDetail();
     await loadMyTickets();
-    showSupportNotice("Your reply has been sent.", "success");
+
+    showSupportNotice("Your message has been sent.", "success");
   } catch (error) {
     showSupportNotice(error.message, "error");
-    if (button) button.disabled = false;
+
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = 'SEND MESSAGE <span>➤</span>';
+    }
   }
 }
 
-/* --------------------------------
-   ADMIN SUPPORT PANEL
--------------------------------- */
+/* ================================================
+   ADMIN SUPPORT CENTER
+================================================ */
 
 async function loadAdminTickets() {
   if (!supportAdmin) return;
 
   const list = document.getElementById("adminTicketList");
+  const detail = document.getElementById("adminTicketDetail");
+
+  if (!list || !detail) return;
 
   list.innerHTML = `<p class="support-loading">Loading support queue...</p>`;
 
@@ -1215,24 +1230,28 @@ async function loadAdminTickets() {
       list.innerHTML = `
         <div class="support-list-empty">
           <span>♛</span>
-          <p>No open support requests.</p>
-          <small>New user tickets will appear here.</small>
+          <p>No support tickets.</p>
+          <small>New customer requests will appear here.</small>
         </div>
       `;
 
-      document.getElementById("adminTicketDetail").innerHTML = `
+      detail.innerHTML = `
         <div class="ticket-empty">
-          <span>♛</span>
-          <h3>Queue is clear</h3>
-          <p>There are no tickets to review right now.</p>
+          <div class="ticket-empty-icon">♛</div>
+          <h3>Support queue is clear</h3>
+          <p>There are no customer conversations to review right now.</p>
         </div>
       `;
 
       return;
     }
 
-    if (!currentAdminTicketId ||
-        !tickets.some(ticket => String(ticket.id) === String(currentAdminTicketId))) {
+    if (
+      !currentAdminTicketId ||
+      !tickets.some(ticket =>
+        String(ticket.id) === String(currentAdminTicketId)
+      )
+    ) {
       currentAdminTicketId = tickets[0].id;
     }
 
@@ -1243,10 +1262,20 @@ async function loadAdminTickets() {
         data-admin-ticket-id="${escapeSupportHTML(ticket.id)}"
       >
         <span class="ticket-item-top">
-          <strong>#${escapeSupportHTML(ticket.id)} · ${escapeSupportHTML(ticket.subject)}</strong>
-          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">${escapeSupportHTML(ticket.status)}</span>
+          <strong>${escapeSupportHTML(ticket.subject)}</strong>
+          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+            ${escapeSupportHTML(getStatusName(ticket.status))}
+          </span>
         </span>
-        <small>${escapeSupportHTML(ticket.email || ticket.user_email || "User")} · ${escapeSupportHTML(formatSupportDate(ticket.updated_at || ticket.created_at))}</small>
+
+        <span class="support-ticket-category">
+          ${escapeSupportHTML(getCategoryName(ticket.category))}
+        </span>
+
+        <small>
+          ${escapeSupportHTML(ticket.email || ticket.user_email || "Customer")}
+          · #${escapeSupportHTML(ticket.id)}
+        </small>
       </button>
     `).join("");
 
@@ -1265,15 +1294,23 @@ async function loadAdminTickets() {
     await loadAdminTicketDetail();
   } catch (error) {
     console.error("Admin ticket loading error:", error);
-    list.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
+
+    list.innerHTML = `
+      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+    `;
   }
 }
+
+/* --------------------------------
+   ADMIN TICKET CHAT
+-------------------------------- */
 
 async function loadAdminTicketDetail() {
   if (!supportAdmin || !currentAdminTicketId) return;
 
   const detail = document.getElementById("adminTicketDetail");
-  detail.innerHTML = `<p class="support-loading">Loading ticket...</p>`;
+
+  detail.innerHTML = `<p class="support-loading">Loading conversation...</p>`;
 
   try {
     const data = await supportRequest(
@@ -1283,19 +1320,34 @@ async function loadAdminTicketDetail() {
     const ticket = data.ticket;
     const messages = data.messages || [];
 
+    if (!ticket) {
+      throw new Error("Ticket not found.");
+    }
+
     detail.innerHTML = `
       <div class="ticket-detail-heading">
         <div>
-          <span class="support-kicker">ADMIN REVIEW · #${escapeSupportHTML(ticket.id)}</span>
+          <span class="support-kicker">
+            CUSTOMER REQUEST #${escapeSupportHTML(ticket.id)}
+          </span>
+
           <h3>${escapeSupportHTML(ticket.subject)}</h3>
-          <p>${escapeSupportHTML(ticket.email || ticket.user_email || "User")} · ${escapeSupportHTML(formatSupportDate(ticket.created_at))}</p>
+
+          <p>
+            ${escapeSupportHTML(ticket.email || ticket.user_email || "Customer")}
+            · ${escapeSupportHTML(getCategoryName(ticket.category))}
+          </p>
         </div>
-        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">${escapeSupportHTML(ticket.status)}</span>
+
+        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+          ${escapeSupportHTML(getStatusName(ticket.status))}
+        </span>
       </div>
 
       <div class="admin-ticket-controls">
         <label>
           Status
+
           <select id="adminTicketStatus">
             <option value="open" ${ticket.status === "open" ? "selected" : ""}>Open</option>
             <option value="answered" ${ticket.status === "answered" ? "selected" : ""}>Answered</option>
@@ -1305,6 +1357,7 @@ async function loadAdminTicketDetail() {
 
         <label>
           Priority
+
           <select id="adminTicketPriority">
             <option value="low" ${ticket.priority === "low" ? "selected" : ""}>Low</option>
             <option value="normal" ${ticket.priority === "normal" ? "selected" : ""}>Normal</option>
@@ -1312,43 +1365,81 @@ async function loadAdminTicketDetail() {
           </select>
         </label>
 
-        <button type="button" id="saveAdminTicket" class="secondary-button">SAVE CHANGES</button>
+        <button
+          type="button"
+          id="saveAdminTicket"
+          class="secondary-button"
+        >
+          SAVE CHANGES
+        </button>
       </div>
 
-      <div class="ticket-message-list" id="adminTicketMessages"></div>
+      <div class="ticket-chat-info">
+        <span>♛</span>
+        <div>
+          <strong>Customer conversation</strong>
+          <small>Reply as EliteHostX Support</small>
+        </div>
+      </div>
 
-      ${ticket.status === "closed" ? `
-        <div class="ticket-closed-note">This ticket is closed. Change its status to reopen it before replying.</div>
-      ` : `
-        <form id="adminTicketReplyForm" class="ticket-reply-form">
-          <textarea id="adminTicketReply" maxlength="4000" placeholder="Write a response to the user..." required></textarea>
-          <button type="submit" class="create-submit">SEND RESPONSE</button>
-        </form>
-      `}
+      <div class="ticket-message-list" id="adminTicketMessages" aria-live="polite"></div>
+
+      ${
+        ticket.status === "closed"
+          ? `
+            <div class="ticket-closed-note">
+              This ticket is closed. Reopen it to send another response.
+            </div>
+          `
+          : `
+            <form id="adminTicketReplyForm" class="ticket-reply-form">
+              <textarea
+                id="adminTicketReply"
+                maxlength="4000"
+                rows="3"
+                placeholder="Write a response to the customer..."
+                required
+              ></textarea>
+
+              <button type="submit" class="support-submit-button">
+                SEND RESPONSE <span>➤</span>
+              </button>
+            </form>
+          `
+      }
     `;
 
     const messageList = document.getElementById("adminTicketMessages");
 
     if (!messages.length) {
-      messageList.innerHTML = `<p class="support-loading">No messages yet.</p>`;
+      messageList.innerHTML = `
+        <p class="support-loading">No messages in this conversation yet.</p>
+      `;
     } else {
       messages.forEach(message => {
-        appendTicketMessage(messageList, message);
+        appendTicketMessage(messageList, message, "admin");
       });
     }
 
-    document.getElementById("saveAdminTicket").addEventListener("click", saveAdminTicketChanges);
+    messageList.scrollTop = messageList.scrollHeight;
 
-    const form = document.getElementById("adminTicketReplyForm");
+    document.getElementById("saveAdminTicket")
+      ?.addEventListener("click", saveAdminTicketChanges);
 
-    if (form) {
-      form.addEventListener("submit", sendAdminTicketReply);
-    }
+    document.getElementById("adminTicketReplyForm")
+      ?.addEventListener("submit", sendAdminTicketReply);
   } catch (error) {
     console.error("Admin ticket detail error:", error);
-    detail.innerHTML = `<p class="support-error">${escapeSupportHTML(error.message)}</p>`;
+
+    detail.innerHTML = `
+      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+    `;
   }
 }
+
+/* --------------------------------
+   ADMIN UPDATE TICKET
+-------------------------------- */
 
 async function saveAdminTicketChanges() {
   if (!supportAdmin || !currentAdminTicketId) return;
@@ -1358,13 +1449,17 @@ async function saveAdminTicketChanges() {
   const priority = document.getElementById("adminTicketPriority").value;
 
   button.disabled = true;
+  button.textContent = "SAVING...";
 
   try {
     await supportRequest(
       `/admin/tickets/${encodeURIComponent(currentAdminTicketId)}`,
       {
         method: "PATCH",
-        body: JSON.stringify({ status, priority })
+        body: JSON.stringify({
+          status,
+          priority
+        })
       }
     );
 
@@ -1375,8 +1470,13 @@ async function saveAdminTicketChanges() {
     showSupportNotice(error.message, "error");
   } finally {
     button.disabled = false;
+    button.textContent = "SAVE CHANGES";
   }
 }
+
+/* --------------------------------
+   ADMIN REPLY
+-------------------------------- */
 
 async function sendAdminTicketReply(event) {
   event.preventDefault();
@@ -1389,7 +1489,10 @@ async function sendAdminTicketReply(event) {
 
   if (!content) return;
 
-  if (button) button.disabled = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SENDING...";
+  }
 
   try {
     await supportRequest(
@@ -1406,7 +1509,11 @@ async function sendAdminTicketReply(event) {
     showSupportNotice("Your response has been sent.", "success");
   } catch (error) {
     showSupportNotice(error.message, "error");
-    if (button) button.disabled = false;
+
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = 'SEND RESPONSE <span>➤</span>';
+    }
   }
 }
 
@@ -1493,7 +1600,7 @@ async function loadStatus() {
    INITIALIZE APPLICATION
 -------------------------------- */
 
-// Hide all pages before the user session is checked.
+// Hide all pages before checking the user session.
 document.querySelectorAll("#appDashboard .page-section").forEach(page => {
   page.classList.remove("active");
   page.hidden = true;
