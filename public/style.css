@@ -2414,3 +2414,33 @@ footer {
     padding: 12px;
   }
 }
+
+/* ELITEHOSTX SUPPORT LIVE FEATURES */
+
+.support-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 6px;
+    margin-left: 8px;
+    border-radius: 20px;
+    background: #e7bd45;
+    color: #17130a;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 0 12px rgba(231, 189, 69, .25);
+}
+
+#enableSupportNotifications {
+    margin-top: 14px;
+    border: 1px solid rgba(231, 189, 69, .35);
+    color: #e7bd45;
+    background: rgba(231, 189, 69, .07);
+}
+
+#enableSupportNotifications:hover {
+    background: rgba(231, 189, 69, .15);
+    border-color: #e7bd45;
+}

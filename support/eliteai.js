@@ -88,7 +88,6 @@ async function initializeSupportDatabase(pool) {
         )
     `);
 
-    // Migraciones para instalaciones anteriores.
     await pool.query(`
         ALTER TABLE support_tickets
         ADD COLUMN IF NOT EXISTS category
@@ -158,7 +157,7 @@ function createSupportRouter({ pool, requireDatabase }) {
     -------------------------------- */
 
     router.post("/tickets", async (req, res, next) => {
-        const client = await pool.connect();
+        let client;
 
         try {
             const category = String(
@@ -190,6 +189,8 @@ function createSupportRouter({ pool, requireDatabase }) {
                     error: "El mensaje debe tener entre 5 y 4000 caracteres."
                 });
             }
+
+            client = await pool.connect();
 
             await client.query("BEGIN");
 
@@ -227,14 +228,24 @@ function createSupportRouter({ pool, requireDatabase }) {
 
             await client.query("COMMIT");
 
+            console.log(
+                `[SUPPORT] Ticket #${ticket.id} created by user ${req.user.id}.`
+            );
+
             res.status(201).json({
                 ticket
             });
+
         } catch (error) {
-            await client.query("ROLLBACK").catch(() => {});
+            if (client) {
+                await client.query("ROLLBACK").catch(() => {});
+            }
+
+            console.error("[SUPPORT] Create ticket error:", error);
             next(error);
+
         } finally {
-            client.release();
+            client?.release();
         }
     });
 
@@ -265,6 +276,7 @@ function createSupportRouter({ pool, requireDatabase }) {
             res.json({
                 tickets: result.rows
             });
+
         } catch (error) {
             next(error);
         }
@@ -337,6 +349,7 @@ function createSupportRouter({ pool, requireDatabase }) {
                 ticket: ticketResult.rows[0],
                 messages: messagesResult.rows
             });
+
         } catch (error) {
             next(error);
         }
@@ -347,7 +360,7 @@ function createSupportRouter({ pool, requireDatabase }) {
     -------------------------------- */
 
     router.post("/tickets/:id/messages", async (req, res, next) => {
-        const client = await pool.connect();
+        let client;
 
         try {
             const ticketId = validId(req.params.id);
@@ -367,6 +380,8 @@ function createSupportRouter({ pool, requireDatabase }) {
                     error: "El mensaje debe tener entre 1 y 4000 caracteres."
                 });
             }
+
+            client = await pool.connect();
 
             await client.query("BEGIN");
 
@@ -444,21 +459,23 @@ function createSupportRouter({ pool, requireDatabase }) {
                 message: messageResult.rows[0],
                 status: nextStatus
             });
+
         } catch (error) {
-            await client.query("ROLLBACK").catch(() => {});
+            if (client) {
+                await client.query("ROLLBACK").catch(() => {});
+            }
+
+            console.error("[SUPPORT] Send message error:", error);
             next(error);
+
         } finally {
-            client.release();
+            client?.release();
         }
     });
 
     /* ================================================
        ADMIN
     ================================================ */
-
-    /* --------------------------------
-       ADMIN TICKET LIST
-    -------------------------------- */
 
     router.get(
         "/admin/tickets",
@@ -494,6 +511,7 @@ function createSupportRouter({ pool, requireDatabase }) {
                 res.json({
                     tickets: result.rows
                 });
+
             } catch (error) {
                 next(error);
             }
@@ -592,6 +610,7 @@ function createSupportRouter({ pool, requireDatabase }) {
                 res.json({
                     ticket: result.rows[0]
                 });
+
             } catch (error) {
                 next(error);
             }

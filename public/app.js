@@ -748,7 +748,6 @@ function bindSupportEvents() {
 
   newTicketButton?.addEventListener("click", openNewTicketForm);
   closeTicketButton?.addEventListener("click", closeNewTicketForm);
-  newTicketForm?.addEventListener("submit", createSupportTicket);
 
   document.querySelectorAll("[data-open-ticket-form]").forEach(button => {
     button.addEventListener("click", openNewTicketForm);
@@ -865,28 +864,58 @@ async function createSupportTicket(event) {
 
   const form = event.currentTarget;
   const button = document.getElementById("createTicketButton");
+  const categoryInput = document.getElementById("ticketCategory");
+  const subjectInput = document.getElementById("ticketSubject");
+  const messageInput = document.getElementById("ticketInitialMessage");
 
-  const category = document.getElementById("ticketCategory").value;
-  const subject = document.getElementById("ticketSubject").value.trim();
-  const message = document.getElementById("ticketInitialMessage").value.trim();
+  if (!currentUser) {
+    showSupportNotice(
+      "Your session has expired. Please sign in again.",
+      "error"
+    );
+    return;
+  }
+
+  if (!form || !categoryInput || !subjectInput || !messageInput) {
+    showSupportNotice(
+      "The ticket form could not be loaded. Refresh the page and try again.",
+      "error"
+    );
+    return;
+  }
+
+  const category = categoryInput.value.trim();
+  const subject = subjectInput.value.trim();
+  const message = messageInput.value.trim();
 
   if (!category || !SUPPORT_CATEGORIES[category]) {
     showSupportNotice("Please select a valid support category.", "error");
+    categoryInput.focus();
     return;
   }
 
-  if (subject.length < 3) {
-    showSupportNotice("The subject must contain at least 3 characters.", "error");
+  if (subject.length < 3 || subject.length > 120) {
+    showSupportNotice(
+      "The subject must contain between 3 and 120 characters.",
+      "error"
+    );
+    subjectInput.focus();
     return;
   }
 
-  if (message.length < 5) {
-    showSupportNotice("Please provide a little more detail in your message.", "error");
+  if (message.length < 5 || message.length > 4000) {
+    showSupportNotice(
+      "Your message must contain between 5 and 4000 characters.",
+      "error"
+    );
+    messageInput.focus();
     return;
   }
 
-  button.disabled = true;
-  button.textContent = "CREATING TICKET...";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "CREATING TICKET...";
+  }
 
   try {
     const data = await supportRequest("/tickets", {
@@ -915,12 +944,20 @@ async function createSupportTicket(event) {
       `Ticket #${ticket.id} created successfully. You can now chat with our support team.`,
       "success"
     );
+
   } catch (error) {
-    console.error("Ticket creation error:", error);
-    showSupportNotice(error.message, "error");
+    console.error("[SUPPORT] Ticket creation error:", error);
+
+    showSupportNotice(
+      error.message || "Unable to create your ticket.",
+      "error"
+    );
+
   } finally {
-    button.disabled = false;
-    button.innerHTML = 'CREATE CONVERSATION <span>➤</span>';
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = 'CREATE CONVERSATION <span>➤</span>';
+    }
   }
 }
 
@@ -1595,6 +1632,20 @@ async function loadStatus() {
     console.error("Connection error:", error);
   }
 }
+
+/* --------------------------------
+   GLOBAL SUPPORT FORM LISTENER
+   Garantiza que el formulario funcione
+   aunque falle la inicialización visual.
+-------------------------------- */
+
+document.addEventListener("submit", event => {
+  if (event.target?.id !== "newTicketForm") {
+    return;
+  }
+
+  createSupportTicket(event);
+});
 
 /* --------------------------------
    INITIALIZE APPLICATION
