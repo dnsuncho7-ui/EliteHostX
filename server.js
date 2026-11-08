@@ -18,6 +18,8 @@ const {
     createSupportRouter
 } = require("./support/eliteai");
 
+const { createEliteAIRouter } = require("./ai/router");
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -328,6 +330,11 @@ app.use(
         pool,
         requireDatabase
     })
+);
+
+app.use(
+    "/api/eliteai",
+    createEliteAIRouter()
 );
 
 // ==========================================
