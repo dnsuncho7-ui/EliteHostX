@@ -12,6 +12,7 @@ const PgSession = require("connect-pg-simple")(session);
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const DiscordStrategy = require("passport-discord").Strategy;
+
 const {
     initializeSupportDatabase,
     createSupportRouter
@@ -23,16 +24,23 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const APP_ORIGIN = (process.env.APP_ORIGIN || "http://localhost:3000").replace(/\/+$/, "");
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const DATABASE_URL = process.env.DATABASE_URL || "";
+
 const SESSION_CONFIGURED = Boolean(DATABASE_URL && SESSION_SECRET);
-const GOOGLE_CONFIGURED = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-const DISCORD_CONFIGURED = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
+const GOOGLE_CONFIGURED = Boolean(
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+);
+const DISCORD_CONFIGURED = Boolean(
+    process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET
+);
 
 let databaseReady = false;
 
 const pool = DATABASE_URL
     ? new Pool({
         connectionString: DATABASE_URL,
-        ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
+        ssl: process.env.DATABASE_SSL === "true"
+            ? { rejectUnauthorized: false }
+            : undefined,
         max: 10,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000
@@ -48,8 +56,16 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'"],
-            styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            styleSrc: [
+                "'self'",
+                "https://fonts.googleapis.com",
+                "'unsafe-inline'"
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com",
+                "data:"
+            ],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'"],
             objectSrc: ["'none'"],
@@ -59,18 +75,25 @@ app.use(helmet({
         }
     },
     crossOriginEmbedderPolicy: false,
-    referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+    referrerPolicy: {
+        policy: "strict-origin-when-cross-origin"
+    }
 }));
 
 app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded({ extended: false, limit: "20kb" }));
+app.use(express.urlencoded({
+    extended: false,
+    limit: "20kb"
+}));
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Demasiados intentos. Espera 15 minutos e inténtalo de nuevo." }
+    message: {
+        error: "Demasiados intentos. Espera 15 minutos e inténtalo de nuevo."
+    }
 });
 
 const registerLimiter = rateLimit({
@@ -78,7 +101,9 @@ const registerLimiter = rateLimit({
     limit: 5,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Se alcanzó el límite de registros desde esta conexión. Inténtalo más tarde." }
+    message: {
+        error: "Se alcanzó el límite de registros desde esta conexión. Inténtalo más tarde."
+    }
 });
 
 const loginLimiter = rateLimit({
@@ -86,7 +111,9 @@ const loginLimiter = rateLimit({
     limit: 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Demasiados intentos de inicio de sesión. Inténtalo más tarde." }
+    message: {
+        error: "Demasiados intentos de inicio de sesión. Inténtalo más tarde."
+    }
 });
 
 const allowedOrigins = new Set([
@@ -102,34 +129,47 @@ if (!IS_PRODUCTION) {
 
 function verifySameOrigin(req, res, next) {
     if (req.get("sec-fetch-site") === "cross-site") {
-        return res.status(403).json({ error: "Solicitud externa bloqueada." });
+        return res.status(403).json({
+            error: "Solicitud externa bloqueada."
+        });
     }
 
     const origin = req.get("origin");
     const referer = req.get("referer");
+
     let requestOrigin = null;
 
     try {
-        if (origin) requestOrigin = new URL(origin).origin;
-        else if (referer) requestOrigin = new URL(referer).origin;
+        if (origin) {
+            requestOrigin = new URL(origin).origin;
+        } else if (referer) {
+            requestOrigin = new URL(referer).origin;
+        }
     } catch {
         requestOrigin = null;
     }
 
     if (!requestOrigin || !allowedOrigins.has(requestOrigin)) {
-        return res.status(403).json({ error: "Origen no autorizado." });
+        return res.status(403).json({
+            error: "Origen no autorizado."
+        });
     }
 
     next();
 }
 
 app.use("/api", (req, res, next) => {
-    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+    if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+        return next();
+    }
+
     return verifySameOrigin(req, res, next);
 });
 
 async function initializeDatabase() {
-    if (!pool) throw new Error("Falta DATABASE_URL en las variables de entorno.");
+    if (!pool) {
+        throw new Error("Falta DATABASE_URL en las variables de entorno.");
+    }
 
     await pool.query(`
         CREATE TABLE IF NOT EXISTS users (
@@ -147,16 +187,21 @@ async function initializeDatabase() {
         )
     `);
 
-    // Compatible con la tabla OAuth que ya existía en la instalación anterior.
+    // Compatible con la tabla OAuth anterior.
     await pool.query(`
         ALTER TABLE users
             ALTER COLUMN provider DROP NOT NULL,
             ALTER COLUMN provider_id DROP NOT NULL
     `);
 
-    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT");
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS password_hash TEXT
+    `);
+
+    // Inicializar las tablas del sistema de soporte.
     await initializeSupportDatabase(pool);
-    
+
     await pool.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique
         ON users (LOWER(email))
@@ -164,6 +209,7 @@ async function initializeDatabase() {
     `);
 
     databaseReady = true;
+
     console.log("[DATABASE] PostgreSQL conectado y esquema preparado.");
 }
 
@@ -176,14 +222,6 @@ function requireDatabase(req, res, next) {
 
     next();
 }
-
-app.use(
-    "/api/support",
-    createSupportRouter({
-        pool,
-        requireDatabase
-    })
-);
 
 function publicUser(row) {
     return {
@@ -201,20 +239,29 @@ function validEmail(email) {
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// ==========================================
+// SESIONES
+// ==========================================
+
 let sessionMiddleware = (req, res, next) => next();
 
 if (SESSION_CONFIGURED) {
     sessionMiddleware = session({
-        name: IS_PRODUCTION ? "__Host-elitehostx.sid" : "elitehostx.sid",
+        name: IS_PRODUCTION
+            ? "__Host-elitehostx.sid"
+            : "elitehostx.sid",
+
         store: new PgSession({
             pool,
             tableName: "user_sessions",
             createTableIfMissing: true
         }),
+
         secret: SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         rolling: true,
+
         cookie: {
             httpOnly: true,
             secure: IS_PRODUCTION,
@@ -226,21 +273,32 @@ if (SESSION_CONFIGURED) {
 }
 
 app.use((req, res, next) => {
-    if (!SESSION_CONFIGURED) return next();
+    if (!SESSION_CONFIGURED) {
+        return next();
+    }
+
     sessionMiddleware(req, res, next);
 });
 
 app.use(passport.initialize());
 
+// ==========================================
+// PASSPORT
+// ==========================================
+
 if (SESSION_CONFIGURED) {
     app.use(passport.session());
 }
 
-passport.serializeUser((user, done) => done(null, user.id));
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
 
 passport.deserializeUser(async (id, done) => {
     try {
-        if (!databaseReady || !pool) return done(null, false);
+        if (!databaseReady || !pool) {
+            return done(null, false);
+        }
 
         const result = await pool.query(
             `SELECT id, display_name, email, avatar_url, provider
@@ -249,13 +307,32 @@ passport.deserializeUser(async (id, done) => {
             [id]
         );
 
-        if (!result.rows.length) return done(null, false);
+        if (!result.rows.length) {
+            return done(null, false);
+        }
 
         done(null, publicUser(result.rows[0]));
     } catch (error) {
         done(error);
     }
 });
+
+// ==========================================
+// ELITEHOSTX SUPPORT
+// Usa la misma sesión del dashboard.
+// ==========================================
+
+app.use(
+    "/api/support",
+    createSupportRouter({
+        pool,
+        requireDatabase
+    })
+);
+
+// ==========================================
+// OAUTH
+// ==========================================
 
 async function saveOAuthUser(provider, profile) {
     const email = provider === "google"
@@ -264,12 +341,17 @@ async function saveOAuthUser(provider, profile) {
 
     const displayName = provider === "google"
         ? (profile.displayName || "EliteHostX User")
-        : (profile.global_name || profile.username || "EliteHostX User");
+        : (
+            profile.global_name ||
+            profile.username ||
+            "EliteHostX User"
+        );
 
     let avatarUrl = profile.photos?.[0]?.value || null;
 
     if (provider === "discord" && profile.avatar) {
-        avatarUrl = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`;
+        avatarUrl =
+            `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`;
     }
 
     const result = await pool.query(
@@ -284,7 +366,13 @@ async function saveOAuthUser(provider, profile) {
             updated_at = NOW(),
             last_login_at = NOW()
          RETURNING id, display_name, email, avatar_url, provider`,
-        [provider, profile.id, email, displayName, avatarUrl]
+        [
+            provider,
+            profile.id,
+            email,
+            displayName,
+            avatarUrl
+        ]
     );
 
     return publicUser(result.rows[0]);
@@ -308,9 +396,8 @@ if (SESSION_CONFIGURED && DISCORD_CONFIGURED) {
     passport.use(new DiscordStrategy({
         clientID: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
-        callbackURL: `${APP_ORIGIN}/auth/discord/callback`,
-        scope: ["identify", "email"]
-    }, async (accessToken, refreshToken, profile, done) => {
+        callbackURL: `${APP_ORIGIN}/auth/discord/callback`
+    , scope: ["identify", "email"] }, async (accessToken, refreshToken, profile, done) => {
         try {
             done(null, await saveOAuthUser("discord", profile));
         } catch (error) {
@@ -318,6 +405,10 @@ if (SESSION_CONFIGURED && DISCORD_CONFIGURED) {
         }
     }));
 }
+
+// ==========================================
+// API STATUS
+// ==========================================
 
 app.get("/api/status", (req, res) => {
     res.set("Cache-Control", "no-store");
@@ -327,125 +418,168 @@ app.get("/api/status", (req, res) => {
         status: "online",
         version: "1.2.0",
         database: databaseReady ? "ready" : "unavailable",
-        registration: databaseReady && SESSION_CONFIGURED ? "enabled" : "unavailable",
+        registration: databaseReady && SESSION_CONFIGURED
+            ? "enabled"
+            : "unavailable",
         minecraft: "Preparado para integrar"
     });
 });
 
-app.post("/api/register", requireDatabase, registerLimiter, async (req, res, next) => {
-    try {
-        const email = String(req.body.email || "").trim().toLowerCase();
-        const password = String(req.body.password || "");
-        const name = String(req.body.name || "").trim();
+// ==========================================
+// REGISTRO
+// ==========================================
 
-        if (!validEmail(email)) {
-            return res.status(400).json({
-                error: "Escribe un correo electrónico válido."
+app.post(
+    "/api/register",
+    requireDatabase,
+    registerLimiter,
+    async (req, res, next) => {
+        try {
+            const email = String(req.body.email || "")
+                .trim()
+                .toLowerCase();
+
+            const password = String(req.body.password || "");
+            const name = String(req.body.name || "").trim();
+
+            if (!validEmail(email)) {
+                return res.status(400).json({
+                    error: "Escribe un correo electrónico válido."
+                });
+            }
+
+            if (
+                password.length < 12 ||
+                Buffer.byteLength(password, "utf8") > 72
+            ) {
+                return res.status(400).json({
+                    error: "La contraseña debe tener entre 12 y 72 caracteres."
+                });
+            }
+
+            if (name.length < 2 || name.length > 60) {
+                return res.status(400).json({
+                    error: "El nombre debe tener entre 2 y 60 caracteres."
+                });
+            }
+
+            const passwordHash = await bcrypt.hash(password, 12);
+
+            const result = await pool.query(
+                `INSERT INTO users
+                    (provider, provider_id, email, display_name, password_hash, last_login_at)
+                 VALUES ('local', $1, $1, $2, $3, NOW())
+                 ON CONFLICT DO NOTHING
+                 RETURNING id, display_name, email, avatar_url, provider`,
+                [
+                    email,
+                    name,
+                    passwordHash
+                ]
+            );
+
+            if (!result.rows.length) {
+                return res.status(409).json({
+                    error: "Ese correo ya está registrado. Inicia sesión o utiliza otro correo."
+                });
+            }
+
+            req.login(publicUser(result.rows[0]), error => {
+                if (error) return next(error);
+
+                res.status(201).json({
+                    success: true,
+                    user: publicUser(result.rows[0])
+                });
             });
+        } catch (error) {
+            if (error.code === "23505") {
+                return res.status(409).json({
+                    error: "Ese correo ya está registrado."
+                });
+            }
+
+            next(error);
         }
-
-        if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
-            return res.status(400).json({
-                error: "La contraseña debe tener entre 12 y 72 caracteres."
-            });
-        }
-
-        if (name.length < 2 || name.length > 60) {
-            return res.status(400).json({
-                error: "El nombre debe tener entre 2 y 60 caracteres."
-            });
-        }
-
-        const passwordHash = await bcrypt.hash(password, 12);
-
-        const result = await pool.query(
-            `INSERT INTO users
-                (provider, provider_id, email, display_name, password_hash, last_login_at)
-             VALUES ('local', $1, $1, $2, $3, NOW())
-             ON CONFLICT DO NOTHING
-             RETURNING id, display_name, email, avatar_url, provider`,
-            [email, name, passwordHash]
-        );
-
-        if (!result.rows.length) {
-            return res.status(409).json({
-                error: "Ese correo ya está registrado. Inicia sesión o utiliza otro correo."
-            });
-        }
-
-        req.login(publicUser(result.rows[0]), error => {
-            if (error) return next(error);
-
-            res.status(201).json({
-                success: true,
-                user: publicUser(result.rows[0])
-            });
-        });
-    } catch (error) {
-        if (error.code === "23505") {
-            return res.status(409).json({
-                error: "Ese correo ya está registrado."
-            });
-        }
-
-        next(error);
     }
-});
+);
 
-app.post("/api/login", requireDatabase, loginLimiter, async (req, res, next) => {
-    try {
-        const email = String(req.body.email || "").trim().toLowerCase();
-        const password = String(req.body.password || "");
+// ==========================================
+// LOGIN
+// ==========================================
 
-        if (!validEmail(email) || !password || password.length > 72) {
-            return res.status(400).json({
-                error: "Correo o contraseña incorrectos."
+app.post(
+    "/api/login",
+    requireDatabase,
+    loginLimiter,
+    async (req, res, next) => {
+        try {
+            const email = String(req.body.email || "")
+                .trim()
+                .toLowerCase();
+
+            const password = String(req.body.password || "");
+
+            if (
+                !validEmail(email) ||
+                !password ||
+                password.length > 72
+            ) {
+                return res.status(400).json({
+                    error: "Correo o contraseña incorrectos."
+                });
+            }
+
+            const result = await pool.query(
+                `SELECT id, display_name, email, avatar_url, provider, password_hash
+                 FROM users
+                 WHERE LOWER(email) = $1 AND provider = 'local'
+                 LIMIT 1`,
+                [email]
+            );
+
+            const account = result.rows[0];
+
+            const passwordMatches = account?.password_hash
+                ? await bcrypt.compare(password, account.password_hash)
+                : false;
+
+            if (!passwordMatches) {
+                return res.status(401).json({
+                    error: "Correo o contraseña incorrectos."
+                });
+            }
+
+            await pool.query(
+                "UPDATE users SET last_login_at = NOW() WHERE id = $1",
+                [account.id]
+            );
+
+            req.login(publicUser(account), error => {
+                if (error) return next(error);
+
+                res.json({
+                    success: true,
+                    user: publicUser(account)
+                });
             });
+        } catch (error) {
+            next(error);
         }
-
-        const result = await pool.query(
-            `SELECT id, display_name, email, avatar_url, provider, password_hash
-             FROM users
-             WHERE LOWER(email) = $1 AND provider = 'local'
-             LIMIT 1`,
-            [email]
-        );
-
-        const account = result.rows[0];
-
-        const passwordMatches = account?.password_hash
-            ? await bcrypt.compare(password, account.password_hash)
-            : false;
-
-        if (!passwordMatches) {
-            return res.status(401).json({
-                error: "Correo o contraseña incorrectos."
-            });
-        }
-
-        await pool.query(
-            "UPDATE users SET last_login_at = NOW() WHERE id = $1",
-            [account.id]
-        );
-
-        req.login(publicUser(account), error => {
-            if (error) return next(error);
-
-            res.json({
-                success: true,
-                user: publicUser(account)
-            });
-        });
-    } catch (error) {
-        next(error);
     }
-});
+);
+
+// ==========================================
+// USUARIO ACTUAL
+// ==========================================
 
 app.get("/api/me", requireDatabase, (req, res) => {
     res.set("Cache-Control", "no-store");
 
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.json({ authenticated: false });
+        return res.json({
+            authenticated: false
+        });
     }
 
     res.json({
@@ -454,23 +588,33 @@ app.get("/api/me", requireDatabase, (req, res) => {
     });
 });
 
+// ==========================================
+// LOGOUT
+// ==========================================
+
 app.post("/api/logout", requireDatabase, (req, res, next) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.json({ success: true });
+        return res.json({
+            success: true
+        });
     }
 
     req.logout(error => {
         if (error) return next(error);
 
         if (!req.session) {
-            return res.json({ success: true });
+            return res.json({
+                success: true
+            });
         }
 
         req.session.destroy(error => {
             if (error) return next(error);
 
             res.clearCookie(
-                IS_PRODUCTION ? "__Host-elitehostx.sid" : "elitehostx.sid",
+                IS_PRODUCTION
+                    ? "__Host-elitehostx.sid"
+                    : "elitehostx.sid",
                 {
                     httpOnly: true,
                     secure: IS_PRODUCTION,
@@ -479,12 +623,17 @@ app.post("/api/logout", requireDatabase, (req, res, next) => {
                 }
             );
 
-            res.json({ success: true });
+            res.json({
+                success: true
+            });
         });
     });
 });
 
-// OAuth queda disponible si algún día se configuran las credenciales.
+// ==========================================
+// GOOGLE OAUTH
+// ==========================================
+
 app.get("/auth/google", authLimiter, (req, res, next) => {
     if (!SESSION_CONFIGURED || !GOOGLE_CONFIGURED) {
         return res.redirect("/?auth=unavailable");
@@ -495,15 +644,24 @@ app.get("/auth/google", authLimiter, (req, res, next) => {
     })(req, res, next);
 });
 
-app.get("/auth/google/callback", authLimiter, (req, res, next) => {
-    if (!SESSION_CONFIGURED || !GOOGLE_CONFIGURED) {
-        return res.redirect("/?auth=unavailable");
-    }
+app.get(
+    "/auth/google/callback",
+    authLimiter,
+    (req, res, next) => {
+        if (!SESSION_CONFIGURED || !GOOGLE_CONFIGURED) {
+            return res.redirect("/?auth=unavailable");
+        }
 
-    passport.authenticate("google", {
-        failureRedirect: "/?auth=failed"
-    })(req, res, next);
-}, (req, res) => res.redirect("/"));
+        passport.authenticate("google", {
+            failureRedirect: "/?auth=failed"
+        })(req, res, next);
+    },
+    (req, res) => res.redirect("/")
+);
+
+// ==========================================
+// DISCORD OAUTH
+// ==========================================
 
 app.get("/auth/discord", authLimiter, (req, res, next) => {
     if (!SESSION_CONFIGURED || !DISCORD_CONFIGURED) {
@@ -513,15 +671,24 @@ app.get("/auth/discord", authLimiter, (req, res, next) => {
     passport.authenticate("discord")(req, res, next);
 });
 
-app.get("/auth/discord/callback", authLimiter, (req, res, next) => {
-    if (!SESSION_CONFIGURED || !DISCORD_CONFIGURED) {
-        return res.redirect("/?auth=unavailable");
-    }
+app.get(
+    "/auth/discord/callback",
+    authLimiter,
+    (req, res, next) => {
+        if (!SESSION_CONFIGURED || !DISCORD_CONFIGURED) {
+            return res.redirect("/?auth=unavailable");
+        }
 
-    passport.authenticate("discord", {
-        failureRedirect: "/?auth=failed"
-    })(req, res, next);
-}, (req, res) => res.redirect("/"));
+        passport.authenticate("discord", {
+            failureRedirect: "/?auth=failed"
+        })(req, res, next);
+    },
+    (req, res) => res.redirect("/")
+);
+
+// ==========================================
+// ARCHIVOS PÚBLICOS
+// ==========================================
 
 app.use(express.static(path.join(__dirname, "public"), {
     index: "index.html",
@@ -538,12 +705,18 @@ app.use((req, res) => {
 app.use((error, req, res, next) => {
     console.error("[ERROR]", error.message);
 
-    if (res.headersSent) return next(error);
+    if (res.headersSent) {
+        return next(error);
+    }
 
     res.status(500).json({
         error: "Ha ocurrido un error interno."
     });
 });
+
+// ==========================================
+// INICIAR SERVIDOR
+// ==========================================
 
 async function startServer() {
     try {
@@ -552,7 +725,9 @@ async function startServer() {
         }
 
         if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
-            throw new Error("SESSION_SECRET falta o es demasiado corta (mínimo 32 caracteres).");
+            throw new Error(
+                "SESSION_SECRET falta o es demasiado corta (mínimo 32 caracteres)."
+            );
         }
 
         await initializeDatabase();
