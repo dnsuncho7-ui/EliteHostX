@@ -1252,3 +1252,17 @@ footer {
     padding:30px 18px;
   }
 }
+
+/* STRICT PAGE SEPARATION */
+#appDashboard .page-section[hidden] {
+  display: none !important;
+}
+
+#appDashboard .page-section.active:not([hidden]) {
+  display: block !important;
+}
+
+#appDashboard .page-section {
+  width: 100%;
+  min-height: 55vh;
+}

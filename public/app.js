@@ -1,3 +1,5 @@
+"use strict";
+
 const authScreen = document.getElementById("authScreen");
 const dashboard = document.getElementById("appDashboard");
 const serverForm = document.getElementById("serverForm");
@@ -15,15 +17,43 @@ const HOSTING_PLANS = [
 ];
 
 const SECTION_INFO = {
-  dashboard: ["Dashboard", "Your EliteHostX account overview."],
-  "my-servers": ["My Servers", "View the servers configured in your account."],
-  "hosting-plans": ["Hosting Plans", "Compare the resources available in each plan."],
-  "create-server": ["Create Server", "Configure a server request using one of our hosting plans."],
-  "file-manager": ["File Manager", "File access will be available after server-node integration."],
-  console: ["Console", "Live server console requires a connected game-server node."],
-  settings: ["Settings", "Manage your account preferences."],
-  support: ["Support", "Find help with your EliteHostX account."]
+  dashboard: {
+    title: "Dashboard",
+    description: "Your EliteHostX account overview."
+  },
+  "my-servers": {
+    title: "My Servers",
+    description: "View and manage your server configurations."
+  },
+  "create-server": {
+    title: "Create Server",
+    description: "Configure a new Minecraft server."
+  },
+  "hosting-plans": {
+    title: "Hosting Plans",
+    description: "Compare the resources available in each plan."
+  },
+  "file-manager": {
+    title: "File Manager",
+    description: "Manage your server files."
+  },
+  console: {
+    title: "Console",
+    description: "View your server console."
+  },
+  settings: {
+    title: "Settings",
+    description: "Manage your account preferences."
+  },
+  support: {
+    title: "Support",
+    description: "Get help with your EliteHostX account."
+  }
 };
+
+/* --------------------------------
+   PLAN IMAGES
+-------------------------------- */
 
 function planImage(plan) {
   const palettes = {
@@ -34,15 +64,23 @@ function planImage(plan) {
     ruby: ["#ffc0ca", "#e33d61", "#82152f"],
     amethyst: ["#f0d9ff", "#a879ed", "#56318f"]
   };
+
   const [light, mid, dark] = palettes[plan.gem];
+
   const art = plan.gem === "crown"
     ? `<path d="M18 35 8 13l20 13 12-20 12 20 20-13-10 22-44 0Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="M20 42h40l-4 12H24Z" fill="${dark}"/><circle cx="40" cy="12" r="4" fill="${light}"/>`
     : plan.gem === "netherite"
       ? `<path d="M40 5 67 20 62 53 40 70 18 53 13 20Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="m40 5 0 65M13 20l49 33M67 20 18 53" stroke="${light}" stroke-opacity=".55" stroke-width="2"/>`
       : `<path d="M40 5 65 25 55 58 40 70 25 58 15 25Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="M40 5 40 70M15 25h50M25 58l15-33 15 33" fill="none" stroke="${light}" stroke-opacity=".65" stroke-width="2"/>`;
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${light}"/><stop offset=".48" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/></linearGradient></defs><ellipse cx="40" cy="72" rx="24" ry="5" fill="#000" opacity=".25"/>${art}</svg>`;
+
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
+
+/* --------------------------------
+   RENDER HOSTING PLANS
+-------------------------------- */
 
 function renderPlans() {
   const grid = document.getElementById("plansGrid");
@@ -51,20 +89,31 @@ function renderPlans() {
   if (grid) {
     grid.innerHTML = HOSTING_PLANS.map(plan => `
       <article class="plan-card" style="--plan-color:${plan.color};--plan-glow:${plan.glow}">
-        <div class="plan-art"><img src="${planImage(plan)}" alt="${plan.name}" loading="lazy"></div>
+        <div class="plan-art">
+          <img src="${planImage(plan)}" alt="${plan.name}">
+        </div>
         <span class="plan-label">ELITEHOSTX PLAN</span>
         <h3>${plan.name}</h3>
         <p class="plan-ram">${plan.ram} GB RAM</p>
-        <div class="plan-specs"><span>⚡ ${plan.cpu} CPU</span><span>▣ ${plan.disk} GB SSD</span></div>
+        <div class="plan-specs">
+          <span>⚡ ${plan.cpu} CPU</span>
+          <span>▣ ${plan.disk} GB SSD</span>
+        </div>
         <p class="plan-price">PRECIO PRÓXIMAMENTE</p>
-        <button type="button" class="plan-select-button" data-plan="${plan.id}">SELECT PLAN</button>
+        <button type="button" class="plan-select-button" data-plan="${plan.id}">
+          SELECT PLAN
+        </button>
       </article>
     `).join("");
 
     grid.querySelectorAll("[data-plan]").forEach(button => {
       button.addEventListener("click", () => {
         navigateTo("create-server");
-        const radio = document.querySelector(`input[name="hostingPlan"][value="${button.dataset.plan}"]`);
+
+        const radio = document.querySelector(
+          `input[name="hostingPlan"][value="${button.dataset.plan}"]`
+        );
+
         if (radio) radio.checked = true;
       });
     });
@@ -73,7 +122,13 @@ function renderPlans() {
   if (choices) {
     choices.innerHTML = HOSTING_PLANS.map((plan, index) => `
       <label class="plan-option">
-        <input type="radio" name="hostingPlan" value="${plan.id}" ${index === 0 ? "checked" : ""} required>
+        <input
+          type="radio"
+          name="hostingPlan"
+          value="${plan.id}"
+          ${index === 0 ? "checked" : ""}
+          required
+        >
         <img src="${planImage(plan)}" alt="${plan.name}">
         <strong>${plan.name}</strong>
         <small>${plan.ram} GB RAM · ${plan.cpu} CPU · ${plan.disk} GB SSD</small>
@@ -82,8 +137,75 @@ function renderPlans() {
   }
 }
 
+/* --------------------------------
+   PAGE NAVIGATION
+-------------------------------- */
+
+function navigateTo(section) {
+  if (!SECTION_INFO[section]) {
+    section = "dashboard";
+  }
+
+  const targetId = `section-${section}`;
+  const targetPage = document.getElementById(targetId);
+
+  if (!targetPage) {
+    console.error(`Page not found: ${targetId}`);
+    return;
+  }
+
+  // Hide EVERY page first.
+  document.querySelectorAll("#appDashboard .page-section").forEach(page => {
+    page.classList.remove("active");
+    page.hidden = true;
+    page.setAttribute("aria-hidden", "true");
+  });
+
+  // Show ONLY the selected page.
+  targetPage.hidden = false;
+  targetPage.classList.add("active");
+  targetPage.setAttribute("aria-hidden", "false");
+
+  // Update the active sidebar item.
+  document.querySelectorAll(".nav-link").forEach(link => {
+    const isActive = link.dataset.section === section;
+
+    link.classList.toggle("active", isActive);
+
+    if (isActive) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+
+  // Update the page heading.
+  document.getElementById("pageTitle").textContent =
+    SECTION_INFO[section].title;
+
+  document.getElementById("pageDescription").textContent =
+    SECTION_INFO[section].description;
+
+  if (section === "my-servers" || section === "dashboard") {
+    renderServers();
+  }
+
+  // Keep the selected page in the URL.
+  history.replaceState(null, "", `#${section}`);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+/* --------------------------------
+   AUTHENTICATION
+-------------------------------- */
+
 function showMessage(message, type = "error") {
   const box = document.getElementById("authMessage");
+
   box.textContent = message;
   box.className = `auth-message ${type}`;
   box.classList.remove("hidden");
@@ -91,13 +213,16 @@ function showMessage(message, type = "error") {
 
 function clearMessage() {
   const box = document.getElementById("authMessage");
+
   box.textContent = "";
   box.className = "auth-message hidden";
 }
 
 function setAuthMode(mode) {
   clearMessage();
+
   const isRegister = mode === "register";
+
   document.getElementById("loginForm").classList.toggle("hidden", isRegister);
   document.getElementById("registerForm").classList.toggle("hidden", !isRegister);
   document.getElementById("loginTab").classList.toggle("active", !isRegister);
@@ -106,34 +231,49 @@ function setAuthMode(mode) {
 
 function showLogin() {
   currentUser = null;
+
   dashboard.classList.add("hidden");
   authScreen.classList.remove("hidden");
 }
 
 function showDashboard(user) {
   currentUser = user;
+
   authScreen.classList.add("hidden");
   dashboard.classList.remove("hidden");
 
   const displayName = user.name || user.email || "User";
 
-  document.getElementById("profileAvatar").textContent = displayName.charAt(0).toUpperCase();
+  document.getElementById("profileAvatar").textContent =
+    displayName.charAt(0).toUpperCase();
+
   document.getElementById("profileAvatar").title = displayName;
   document.getElementById("accountName").textContent = displayName;
-  document.getElementById("settingsCurrentName").textContent = user.name || "Not set";
-  document.getElementById("settingsEmail").textContent = user.email || "Not available";
+
+  document.getElementById("settingsCurrentName").textContent =
+    user.name || "Not set";
+
+  document.getElementById("settingsEmail").textContent =
+    user.email || "Not available";
 
   renderPlans();
   renderServers();
   navigateTo("dashboard");
 }
 
+/* --------------------------------
+   ACCOUNT SERVER STORAGE
+-------------------------------- */
+
 function getStorageKey() {
-  return currentUser ? `elitehostx_servers_${currentUser.id}` : null;
+  return currentUser
+    ? `elitehostx_servers_${currentUser.id}`
+    : null;
 }
 
 function getServers() {
   const key = getStorageKey();
+
   if (!key) return [];
 
   try {
@@ -146,30 +286,15 @@ function getServers() {
 
 function saveServers(servers) {
   const key = getStorageKey();
-  if (key) localStorage.setItem(key, JSON.stringify(servers));
-}
 
-function navigateTo(section) {
-  if (!SECTION_INFO[section]) section = "dashboard";
-
-  document.querySelectorAll(".page-section").forEach(panel => {
-    panel.classList.toggle("active", panel.id === `section-${section}`);
-  });
-
-  document.querySelectorAll(".nav-link").forEach(link => {
-    link.classList.toggle("active", link.dataset.section === section);
-  });
-
-  document.getElementById("pageTitle").textContent = SECTION_INFO[section][0];
-  document.getElementById("pageDescription").textContent = SECTION_INFO[section][1];
-
-  if (section === "my-servers" || section === "dashboard") {
-    renderServers();
+  if (key) {
+    localStorage.setItem(key, JSON.stringify(servers));
   }
-
-  history.replaceState(null, "", `#${section}`);
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+/* --------------------------------
+   SIDEBAR AND PAGE BUTTONS
+-------------------------------- */
 
 document.querySelectorAll(".nav-link").forEach(link => {
   link.addEventListener("click", event => {
@@ -179,17 +304,33 @@ document.querySelectorAll(".nav-link").forEach(link => {
 });
 
 document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click", () => navigateTo(button.dataset.go));
+  button.addEventListener("click", () => {
+    navigateTo(button.dataset.go);
+  });
 });
 
-document.getElementById("loginTab").addEventListener("click", () => setAuthMode("login"));
-document.getElementById("registerTab").addEventListener("click", () => setAuthMode("register"));
+document.getElementById("heroCreate").addEventListener("click", () => {
+  navigateTo("create-server");
+});
+
+document.getElementById("loginTab").addEventListener("click", () => {
+  setAuthMode("login");
+});
+
+document.getElementById("registerTab").addEventListener("click", () => {
+  setAuthMode("register");
+});
+
+/* --------------------------------
+   LOGIN
+-------------------------------- */
 
 document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
   clearMessage();
 
   const button = document.getElementById("loginSubmit");
+
   button.disabled = true;
   button.textContent = "SIGNING IN...";
 
@@ -222,6 +363,10 @@ document.getElementById("loginForm").addEventListener("submit", async event => {
   }
 });
 
+/* --------------------------------
+   REGISTER
+-------------------------------- */
+
 document.getElementById("registerForm").addEventListener("submit", async event => {
   event.preventDefault();
   clearMessage();
@@ -230,10 +375,12 @@ document.getElementById("registerForm").addEventListener("submit", async event =
   const confirmation = document.getElementById("registerPasswordConfirm").value;
 
   if (password !== confirmation) {
-    return showMessage("The passwords do not match.");
+    showMessage("The passwords do not match.");
+    return;
   }
 
   const button = document.getElementById("registerSubmit");
+
   button.disabled = true;
   button.textContent = "CREATING ACCOUNT...";
 
@@ -267,12 +414,18 @@ document.getElementById("registerForm").addEventListener("submit", async event =
   }
 });
 
+/* --------------------------------
+   LOGOUT
+-------------------------------- */
+
 async function logout() {
   try {
     const response = await fetch("/api/logout", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({})
     });
 
@@ -291,6 +444,10 @@ async function logout() {
 document.getElementById("logoutButton").addEventListener("click", logout);
 document.getElementById("settingsLogout").addEventListener("click", logout);
 
+/* --------------------------------
+   ACCOUNT SETTINGS
+-------------------------------- */
+
 document.getElementById("changeNameButton").addEventListener("click", () => {
   if (!currentUser) return;
 
@@ -304,75 +461,47 @@ document.getElementById("changeNameButton").addEventListener("click", () => {
   const cleanName = nextName.trim().slice(0, 60);
 
   if (cleanName.length < 2) {
-    return alert("The display name must contain at least 2 characters.");
+    alert("The display name must contain at least 2 characters.");
+    return;
   }
 
   currentUser.name = cleanName;
 
   document.getElementById("accountName").textContent = cleanName;
-  document.getElementById("profileAvatar").textContent = cleanName.charAt(0).toUpperCase();
+  document.getElementById("profileAvatar").textContent =
+    cleanName.charAt(0).toUpperCase();
+
   document.getElementById("settingsCurrentName").textContent = cleanName;
 
-  alert("Display name updated for this session. To change it permanently, account profile editing must be added to the backend.");
+  alert("Display name updated for this session. Permanent profile editing is not connected yet.");
 });
 
-async function checkSession() {
-  try {
-    const response = await fetch("/api/me", {
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" },
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      return showLogin();
-    }
-
-    const data = await response.json();
-
-    if (data.authenticated && data.user) {
-      showDashboard(data.user);
-    } else {
-      showLogin();
-    }
-  } catch (error) {
-    console.error("Session check error:", error);
-    showLogin();
-  }
-}
-
-function checkAuthMessages() {
-  const params = new URLSearchParams(window.location.search);
-  const status = params.get("auth");
-
-  if (status === "failed") {
-    showMessage("Unable to sign in with that provider.");
-  }
-
-  if (status === "unavailable") {
-    showMessage("That sign-in method is not configured yet.");
-  }
-
-  if (status) {
-    history.replaceState({}, document.title, location.pathname);
-  }
-}
+/* --------------------------------
+   CREATE SERVER CONFIGURATION
+-------------------------------- */
 
 serverForm.addEventListener("submit", event => {
   event.preventDefault();
 
   if (!currentUser) {
-    return showLogin();
+    showLogin();
+    return;
   }
 
   const name = document.getElementById("serverName").value.trim();
   const software = document.getElementById("serverSoftware").value;
   const version = document.getElementById("serverVersion").value;
-  const selectedPlanId = document.querySelector('input[name="hostingPlan"]:checked')?.value;
-  const selectedPlan = HOSTING_PLANS.find(plan => plan.id === selectedPlanId);
+
+  const selectedPlanId =
+    document.querySelector('input[name="hostingPlan"]:checked')?.value;
+
+  const selectedPlan = HOSTING_PLANS.find(
+    plan => plan.id === selectedPlanId
+  );
 
   if (!name || !selectedPlan) {
-    return alert("Choose a plan and enter a server name.");
+    alert("Choose a plan and enter a server name.");
+    return;
   }
 
   const servers = getServers();
@@ -391,12 +520,18 @@ serverForm.addEventListener("submit", event => {
   });
 
   saveServers(servers);
-  renderServers();
+
   serverForm.reset();
+
+  renderServers();
   navigateTo("my-servers");
 
-  alert("Server configuration saved. A real Minecraft server has not been provisioned yet.");
+  alert("Configuration saved. A real Minecraft server has not been created yet.");
 });
+
+/* --------------------------------
+   RENDER MY SERVERS
+-------------------------------- */
 
 function renderServers() {
   if (!currentUser || !serverContainer) return;
@@ -412,14 +547,17 @@ function renderServers() {
   );
 
   document.getElementById("totalRam").textContent = `${totalRam} GB`;
+
   serverContainer.innerHTML = "";
 
-  if (!servers.length) {
+  if (servers.length === 0) {
     serverContainer.innerHTML = `
       <div class="empty-icon">▣</div>
       <h2>No servers yet</h2>
       <p>You haven't created any Minecraft servers. Start by creating your first one.</p>
-      <button type="button" class="primary-button" data-go="create-server">CREATE MY FIRST SERVER</button>
+      <button type="button" class="primary-button" data-go="create-server">
+        CREATE MY FIRST SERVER
+      </button>
     `;
 
     serverContainer.querySelector("[data-go]").addEventListener("click", () => {
@@ -439,7 +577,8 @@ function renderServers() {
     title.textContent = server.name;
 
     const details = document.createElement("p");
-    details.textContent = `${server.software} · Minecraft ${server.version} · ${server.planName} · ${server.ram} GB RAM · ${server.cpu} CPU · ${server.disk} GB SSD`;
+    details.textContent =
+      `${server.software} · Minecraft ${server.version} · ${server.planName} · ${server.ram} GB RAM · ${server.cpu} CPU · ${server.disk} GB SSD`;
 
     const status = document.createElement("span");
     status.className = "server-status";
@@ -458,7 +597,10 @@ function renderServers() {
         return;
       }
 
-      saveServers(getServers().filter(item => item.id !== server.id));
+      saveServers(
+        getServers().filter(item => item.id !== server.id)
+      );
+
       renderServers();
     });
 
@@ -468,6 +610,63 @@ function renderServers() {
     serverContainer.append(card);
   });
 }
+
+/* --------------------------------
+   SESSION CHECK
+-------------------------------- */
+
+async function checkSession() {
+  try {
+    const response = await fetch("/api/me", {
+      credentials: "same-origin",
+      headers: {
+        "Accept": "application/json"
+      },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      showLogin();
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.authenticated && data.user) {
+      showDashboard(data.user);
+    } else {
+      showLogin();
+    }
+  } catch (error) {
+    console.error("Session check error:", error);
+    showLogin();
+  }
+}
+
+/* --------------------------------
+   AUTH URL MESSAGES
+-------------------------------- */
+
+function checkAuthMessages() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("auth");
+
+  if (status === "failed") {
+    showMessage("Unable to sign in with that provider.");
+  }
+
+  if (status === "unavailable") {
+    showMessage("That sign-in method is not configured yet.");
+  }
+
+  if (status) {
+    history.replaceState({}, document.title, location.pathname);
+  }
+}
+
+/* --------------------------------
+   API STATUS
+-------------------------------- */
 
 async function loadStatus() {
   try {
@@ -484,12 +683,23 @@ async function loadStatus() {
     console.log("EliteHostX:", data);
 
     if (data.registration !== "enabled") {
-      showMessage("The account service is currently unavailable. Please try again later.");
+      console.warn("Account registration is not enabled.");
     }
   } catch (error) {
     console.error("Connection error:", error);
   }
 }
+
+/* --------------------------------
+   INITIALIZE APPLICATION
+-------------------------------- */
+
+// Hide all pages before the user session is checked.
+document.querySelectorAll("#appDashboard .page-section").forEach(page => {
+  page.classList.remove("active");
+  page.hidden = true;
+  page.setAttribute("aria-hidden", "true");
+});
 
 renderPlans();
 checkAuthMessages();
