@@ -1,399 +1,377 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#080604">
-<meta name="description" content="EliteHostX: hosting premium para servidores de Minecraft.">
-<title>EliteHostX — Premium Game Hosting</title>
+<title>EliteHostX | Premium Game Hosting</title>
+<meta name="description" content="EliteHostX - Premium Minecraft Server Hosting">
+<meta name="theme-color" content="#080d17">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
 
 <style>
+.auth-tabs{display:flex;gap:8px;margin:22px 0 18px}
+.auth-tab{flex:1;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.04);color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.auth-tab.active{background:#2563eb;border-color:#2563eb;color:#fff}
+.auth-form{display:grid;gap:10px;text-align:left}
+.auth-form label{font-size:13px;font-weight:700;color:#cbd5e1}
+.auth-form input{box-sizing:border-box;width:100%;padding:13px 14px;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:#0d1728;color:#fff;font:inherit;outline:none}
+.auth-form input:focus{border-color:#60a5fa}
+.auth-submit{width:100%;padding:14px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer;margin-top:8px}
+.auth-submit:disabled{opacity:.6;cursor:wait}
+.auth-message{margin:12px 0;padding:11px 13px;border-radius:9px;background:rgba(220,38,38,.14);border:1px solid rgba(248,113,113,.35);color:#fecaca;font-size:13px;text-align:left}
+.auth-hint{font-size:12px;color:#94a3b8;line-height:1.5;margin:4px 0}
+.hidden{display:none!important}
+.plans-section{margin:30px 0}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:18px}
+.plan-card{position:relative;overflow:hidden;padding:20px;border:1px solid rgba(148,163,184,.2);border-radius:16px;background:linear-gradient(145deg,rgba(20,33,55,.96),rgba(10,18,32,.98));box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.plan-card:after{content:"";position:absolute;width:130px;height:130px;right:-55px;top:-55px;border-radius:50%;background:var(--plan-glow);filter:blur(35px);opacity:.22;pointer-events:none}
+.plan-art{display:flex;align-items:center;justify-content:center;height:116px;margin:-4px 0 12px}
+.plan-art img{width:112px;height:112px;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(0,0,0,.35))}
+.plan-card h3{margin:5px 0 12px;font-size:18px;letter-spacing:1.2px}
+.plan-ram{font-size:27px;font-weight:900;margin:0 0 10px;color:var(--plan-color)}
+.plan-specs{display:flex;flex-wrap:wrap;gap:7px}
+.plan-specs span{font-size:12px;padding:7px 9px;border-radius:8px;background:rgba(148,163,184,.1);color:#cbd5e1}
+.plan-label{font-size:10px;letter-spacing:1.5px;color:#94a3b8;font-weight:800}
+.plan-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:10px 0 18px}
+.plan-option{position:relative;display:block;border:1px solid rgba(148,163,184,.25);border-radius:12px;padding:12px;background:rgba(15,23,42,.65);cursor:pointer}
+.plan-option:has(input:checked){border-color:#60a5fa;box-shadow:0 0 0 2px rgba(96,165,250,.18)}
+.plan-option input{position:absolute;opacity:0;pointer-events:none}
+.plan-option img{display:block;width:58px;height:58px;object-fit:contain;margin:0 auto 6px}
+.plan-option strong,.plan-option small{display:block;text-align:center}
+.plan-option small{color:#94a3b8;margin-top:4px}
+.section-anchor{scroll-margin-top:24px}
+@media(max-width:600px){.plan-art{height:90px}.plan-art img{width:90px;height:90px}}
+</style>
+
+<style>
+/* ELITEHOSTX GOLD EDITION */
 :root {
- --gold:#f5bd35;
- --gold-light:#ffe69a;
- --gold-dark:#9b6410;
- --bg:#080604;
- --panel:#15100a;
- --line:rgba(245,189,53,.18);
+  --ehx-gold: #f5bd35;
+  --ehx-gold-light: #ffe9a6;
+  --ehx-gold-dark: #9b6410;
+  --ehx-black: #080604;
 }
-body.landing-page {
- background:radial-gradient(ellipse at 50% -15%,rgba(183,116,13,.19),transparent 48%),#080604;
+body {
+  background: radial-gradient(ellipse at 50% 0%, rgba(174,112,17,.13), transparent 48%), #080604;
 }
-.site-header {border-color:var(--line)}
-.site-brand {gap:5px}
-.brand-logo {width:65px;height:65px;object-fit:contain}
-.sr-only {
- position:absolute;width:1px;height:1px;padding:0;margin:-1px;
- overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+.auth-screen {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(190,132,28,.18), transparent 42%),
+    linear-gradient(145deg, #080604, #120d06 55%, #080604);
 }
-.site-nav a:hover,.login-link:hover {color:var(--gold-light)}
-.button {
- background:linear-gradient(110deg,#a66a0b,#f4bd36,#ffe49a);
- color:#160e03;
- box-shadow:0 8px 28px rgba(218,151,28,.2);
+.auth-card, .modal-content {
+  border-color: rgba(245,189,53,.25) !important;
+  background: linear-gradient(145deg, #191208, #0c0905) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55), 0 0 35px rgba(204,146,35,.08);
 }
-.button-ghost {
- background:rgba(255,255,255,.035);
- border:1px solid var(--line);
- color:#ffe7ad;
+.auth-logo-wrap { display:flex; justify-content:center; margin:0 auto 12px; }
+.elite-logo { display:block; object-fit:contain; }
+.auth-logo { width:min(250px, 78%); max-height:135px; filter:drop-shadow(0 0 22px rgba(245,189,53,.2)); }
+.auth-brand h1, .brand h2, .footer-brand { color:#fff0c2 !important; }
+.auth-brand h1 span, .brand h2 span { color:var(--ehx-gold) !important; }
+.auth-tab.active, .auth-submit, .primary-button, .create-submit {
+  background:linear-gradient(110deg,#9b6410,#e5ad31 48%,#ffe69a) !important;
+  border-color:#e5ad31 !important;
+  color:#160e03 !important;
+  box-shadow:0 8px 24px rgba(218,151,28,.18);
 }
-.hero {
- min-height:640px;
+.auth-tab, .auth-form input, .auth-form select, .modal-content input, .modal-content select {
+  border-color:rgba(245,189,53,.2) !important;
 }
-.hero h1 span,.section-heading h2 span,
-.feature-copy h2 span,.final-cta h2 span {
- background:linear-gradient(95deg,#fff0ae,#e6a91e,#fff0ae);
- -webkit-background-clip:text;background-clip:text;color:transparent;
+.auth-form input:focus, .modal-content input:focus, .modal-content select:focus {
+  border-color:var(--ehx-gold) !important;
+  box-shadow:0 0 0 3px rgba(245,189,53,.1);
 }
-.eyebrow {color:#e8b94e}
-.hero-visual.hero-logo-visual {
- position:relative;
- height:430px;
- display:grid;
- place-items:center;
+.sidebar {
+  background:linear-gradient(180deg,#171006,#0b0804) !important;
+  border-right:1px solid rgba(245,189,53,.2) !important;
 }
-.hero-logo {
- position:relative;
- z-index:2;
- width:min(100%,430px);
- height:auto;
- object-fit:contain;
- mix-blend-mode:screen;
- filter:drop-shadow(0 0 30px rgba(255,181,31,.28));
+.brand-icon.logo-brand {
+  width:64px !important;
+  height:54px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
-.logo-halo {
- position:absolute;
- width:280px;height:280px;
- border-radius:50%;
- background:rgba(232,161,24,.2);
- filter:blur(100px);
+.logo-brand img { width:100%; height:100%; object-fit:contain; }
+.menu a.active, .menu a:hover {
+  color:#ffe6a0 !important;
+  background:rgba(245,189,53,.1) !important;
+  border-color:rgba(245,189,53,.28) !important;
 }
-.hero-grid {
- opacity:.15;
- background-image:
- linear-gradient(rgba(245,189,53,.08) 1px,transparent 1px),
- linear-gradient(90deg,rgba(245,189,53,.08) 1px,transparent 1px);
+.menu a span, .menu-title, .version, .support-icon { color:var(--ehx-gold) !important; }
+.support-box, .stat-card, .plan-card, .empty, .welcome, .modal-header {
+  border-color:rgba(245,189,53,.18) !important;
 }
-.live-dot {
- background:#f5bd35;
- box-shadow:0 0 12px #f5bd35;
+.welcome {
+  background:
+    radial-gradient(circle at 82% 40%,rgba(213,155,44,.2),transparent 28%),
+    linear-gradient(120deg,#1b1409,#0b0805) !important;
 }
-.trust-strip {border-color:var(--line)}
-.trust-strip strong {color:var(--gold)}
-.public-plan {
- background:linear-gradient(145deg,#1b1409,#0d0a06);
- border-color:rgba(245,189,53,.18);
+.welcome h2 span, .section-heading h2, .section-header h2 { color:var(--ehx-gold-light) !important; }
+.tag, .system-status, .status-dot { color:var(--ehx-gold) !important; }
+.status-dot { background:var(--ehx-gold) !important; box-shadow:0 0 12px var(--ehx-gold); }
+.hero-circle {
+  width:min(290px, 28vw) !important;
+  height:min(220px, 25vw) !important;
+  background:transparent !important;
+  box-shadow:none !important;
 }
-.public-plan:hover {
- border-color:rgba(245,189,53,.65);
- transform:translateY(-5px);
+.hero-circle img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 0 30px rgba(245,189,53,.28));
 }
-.plan-price strong {color:var(--gold-light)}
-.feature-section {
- background:linear-gradient(120deg,#171006,#0a0805);
- border-color:var(--line);
+.plan-card {
+  background:linear-gradient(145deg,#1b1409,#0d0a06) !important;
+  border-color:rgba(245,189,53,.2) !important;
 }
-.feature-icon {
- color:var(--gold-light);
- background:rgba(245,189,53,.1);
+.plan-card:hover { border-color:rgba(245,189,53,.65) !important; transform:translateY(-4px); }
+.plan-ram { color:var(--ehx-gold-light) !important; }
+.plan-specs span { background:rgba(245,189,53,.08) !important; color:#eadbb8 !important; }
+.stat-icon, .stat-card h2, .footer-brand { color:var(--ehx-gold) !important; }
+.footer-brand { display:flex; align-items:center; justify-content:center; gap:10px; font-weight:900; }
+.footer-brand img { width:72px; height:48px; object-fit:contain; }
+.logout-button, .close-button {
+  border-color:rgba(245,189,53,.28) !important;
+  color:#ffe6a0 !important;
 }
-.faq-list details {border-color:var(--line)}
-.faq-list summary span {color:var(--gold)}
-.final-cta {
- background:radial-gradient(ellipse at center,rgba(166,106,11,.22),transparent 70%),#100b05;
- border:1px solid var(--line);
-}
-.site-footer {border-color:var(--line)}
-.site-footer .brand-logo {width:75px;height:75px}
-@media(max-width:800px) {
- .brand-logo {width:52px;height:52px}
- .hero {padding-top:65px}
- .hero-visual.hero-logo-visual {height:300px}
- .hero-logo {max-width:320px}
-}
-@media(max-width:480px) {
- .hero-visual.hero-logo-visual {height:250px}
- .hero-logo {max-width:270px}
+.logout-button:hover, .close-button:hover { background:rgba(245,189,53,.1) !important; }
+.auth-divider { border-color:rgba(245,189,53,.18) !important; }
+.auth-terms a { color:var(--ehx-gold-light) !important; }
+@media(max-width:700px) {
+  .hero-circle { width:190px !important; height:160px !important; }
+  .brand-icon.logo-brand { width:54px !important; height:46px !important; }
 }
 </style>
 </head>
 
-<body class="landing-page">
+<body>
+<section id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo-wrap">
+        <img class="elite-logo auth-logo" src="/images/elitehostx-logo.png" alt="EliteHostX">
+      </div>
+      <h1>EliteHost<span>X</span></h1>
+      <p>PREMIUM GAME HOSTING</p>
+    </div>
 
-<header class="site-header">
- <a class="site-brand" href="#inicio" aria-label="EliteHostX inicio">
-  <img class="brand-logo" src="/images/elitehostx-logo.png" alt="EliteHostX">
-  <span class="sr-only">EliteHostX</span>
- </a>
+    <div class="auth-heading">
+      <h2>Welcome to EliteHostX</h2>
+      <p>Sign in or create an account to manage your Minecraft servers.</p>
+    </div>
 
- <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <div class="auth-tabs">
+      <button type="button" id="loginTab" class="auth-tab active">SIGN IN</button>
+      <button type="button" id="registerTab" class="auth-tab">CREATE ACCOUNT</button>
+    </div>
 
- <nav class="site-nav" id="siteNav">
-  <a href="#inicio">Inicio</a>
-  <a href="#planes">Planes</a>
-  <a href="#caracteristicas">Características</a>
-  <a href="#faq">Preguntas frecuentes</a>
- </nav>
+    <div id="authMessage" class="auth-message hidden" role="alert"></div>
 
- <div class="header-actions">
-  <a class="login-link" href="/dashboard/">Iniciar sesión</a>
-  <a class="button button-small" href="/dashboard/?mode=register">Crear cuenta <span>↗</span></a>
- </div>
-</header>
+    <form id="loginForm" class="auth-form">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" autocomplete="email" maxlength="320" placeholder="you@example.com" required>
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" maxlength="72" required>
+      <button id="loginSubmit" type="submit" class="auth-submit">SIGN IN</button>
+    </form>
 
-<main>
+    <form id="registerForm" class="auth-form hidden">
+      <label for="registerName">Display name</label>
+      <input id="registerName" type="text" autocomplete="name" minlength="2" maxlength="60" placeholder="Your name" required>
+      <label for="registerEmail">Email</label>
+      <input id="registerEmail" type="email" autocomplete="email" maxlength="320" placeholder="you@example.com" required>
+      <label for="registerPassword">Password</label>
+      <input id="registerPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+      <label for="registerPasswordConfirm">Confirm password</label>
+      <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+      <p class="auth-hint">Use at least 12 characters. Do not reuse a password from another site.</p>
+      <button id="registerSubmit" type="submit" class="auth-submit">CREATE ACCOUNT</button>
+    </form>
 
-<section class="hero" id="inicio">
- <div class="hero-grid"></div>
-
- <div class="hero-copy">
-  <div class="eyebrow">
-   <span class="live-dot"></span>
-   HOSTING PARA MINECRAFT · ELITEHOSTX
+    <div class="auth-divider"><span>SECURE ACCOUNT ACCESS</span></div>
+    <p class="auth-terms">By continuing, you agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>.</p>
+    <div class="auth-footer">© 2026 EliteHostX. All rights reserved.</div>
   </div>
+</section>
 
-  <h1>Tu mundo.<br> Tus reglas. <span>Tu servidor.</span></h1>
+<div id="appDashboard" class="hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon logo-brand">
+        <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+      </div>
+      <div>
+        <h2>EliteHost<span>X</span></h2>
+        <p class="subtitle">PREMIUM GAME HOSTING</p>
+      </div>
+    </div>
 
-  <p class="hero-description">
-   Lleva tu aventura de Minecraft al siguiente nivel con planes diseñados para darte potencia, estabilidad y libertad.
-  </p>
+    <div class="menu-section">
+      <p class="menu-title">MAIN MENU</p>
+      <nav class="menu">
+        <a class="active" href="#"><span>▦</span> Dashboard</a>
+        <a href="#servers"><span>▣</span> My Servers</a>
+        <a href="#plans"><span>♛</span> Plans</a>
+        <a href="#servers" id="sidebarCreate"><span>＋</span> Create Server</a>
+      </nav>
+    </div>
 
-  <div class="hero-actions">
-   <a class="button" href="#planes">Explorar planes <span>→</span></a>
-   <a class="button button-ghost" href="/dashboard/">Entrar al panel</a>
+    <div class="menu-section">
+      <p class="menu-title">MANAGEMENT</p>
+      <nav class="menu">
+        <a href="#servers"><span>▤</span> File Manager</a>
+        <a href="#servers"><span>⌘</span> Console</a>
+        <a href="#settings"><span>⚙</span> Settings</a>
+      </nav>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="support-box">
+        <span class="support-icon">✦</span>
+        <strong>Need help?</strong>
+        <p>Our support team is here for you.</p>
+      </div>
+      <div class="version">ELITEHOSTX PANEL · V1.2.0</div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Welcome back to EliteHostX.</p>
+      </div>
+      <div class="topbar-right">
+        <div class="system-status"><span class="status-dot"></span>SYSTEM ONLINE</div>
+        <div class="profile" id="profileAvatar">E</div>
+        <span id="accountName" class="account-name"></span>
+        <button type="button" id="logoutButton" class="logout-button">LOG OUT</button>
+      </div>
+    </header>
+
+    <section class="welcome">
+      <div class="welcome-content">
+        <span class="tag">⚡ PREMIUM MINECRAFT HOSTING</span>
+        <h2>Take control of<br>your <span>game world.</span></h2>
+        <p>Powerful servers. Unlimited possibilities. Everything you need in one place.</p>
+        <button class="primary-button" id="heroCreate">+ CREATE YOUR SERVER</button>
+      </div>
+      <div class="hero-decoration">
+        <div class="hero-circle">
+          <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+        </div>
+      </div>
+    </section>
+
+    <section class="plans-section section-anchor" id="plans">
+      <div class="section-heading">
+        <h2>Hosting Plans</h2>
+        <p>Choose the power that fits your Minecraft world.</p>
+      </div>
+      <div class="plans-grid" id="plansGrid"></div>
+    </section>
+
+    <section class="statistics-section">
+      <div class="section-heading">
+        <h2>Overview</h2>
+        <p>Your hosting statistics</p>
+      </div>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-icon">▣</div>
+          <span>Total Servers</span>
+          <h2 id="totalServers">0</h2>
+          <small>Registered servers</small>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">◉</div>
+          <span>Active Servers</span>
+          <h2 id="activeServers">0</h2>
+          <small>Currently running</small>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">▤</div>
+          <span>Allocated RAM</span>
+          <h2 id="totalRam">0 GB</h2>
+          <small>Total configured memory</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="servers-section" id="servers">
+      <div class="section-header">
+        <div>
+          <h2>My Servers</h2>
+          <p>Manage your Minecraft infrastructure.</p>
+        </div>
+        <button class="primary-button" id="createButton">+ CREATE SERVER</button>
+      </div>
+      <div class="empty" id="serverContainer">
+        <div class="empty-icon">▣</div>
+        <h2>No servers yet</h2>
+        <p>You haven't created any Minecraft servers. Start by creating your first one.</p>
+        <button class="primary-button" id="emptyCreate">CREATE MY FIRST SERVER</button>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-brand">
+        <img src="/images/elitehostx-logo.png" alt="EliteHostX">
+        <span>EliteHostX</span>
+      </div>
+      <p>© 2026 EliteHostX. All rights reserved.</p>
+      <p>POWERED BY ELITEHOSTX</p>
+    </footer>
+  </main>
+</div>
+
+<div id="serverModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>
+        <span class="tag">ELITEHOSTX PANEL</span>
+        <h2>Create Minecraft Server</h2>
+        <p>Configure your new server.</p>
+      </div>
+      <button type="button" id="closeModal" class="close-button">✕</button>
+    </div>
+
+    <form id="serverForm">
+      <label for="serverName">Server Name</label>
+      <input id="serverName" type="text" placeholder="My Minecraft Server" maxlength="40" required>
+
+      <label for="serverSoftware">Server Software</label>
+      <select id="serverSoftware">
+        <option value="Paper">Paper</option>
+        <option value="Purpur">Purpur</option>
+        <option value="Vanilla">Vanilla</option>
+        <option value="Spigot">Spigot</option>
+      </select>
+
+      <label for="serverVersion">Minecraft Version</label>
+      <select id="serverVersion">
+        <option value="1.21.11">1.21.11</option>
+        <option value="1.21.10">1.21.10</option>
+        <option value="1.21.8">1.21.8</option>
+      </select>
+
+      <label>Choose a hosting plan</label>
+      <div class="plan-choice" id="planChoice"></div>
+      <button type="submit" class="create-submit">⚡ CREATE SERVER</button>
+    </form>
+
+    <div class="modal-note">ⓘ Demo mode: configurations are saved in this browser. Real Minecraft instances require a server engine.</div>
   </div>
+</div>
 
-  <div class="hero-points">
-   <span>✦ Recursos definidos</span>
-   <span>✦ Panel de gestión</span>
-   <span>✦ Soporte cercano</span>
-  </div>
- </div>
-
- <div class="hero-visual hero-logo-visual" aria-label="Logotipo de EliteHostX">
-  <div class="logo-halo"></div>
-  <img class="hero-logo" src="/images/elitehostx-logo.png" alt="EliteHostX: corona dorada y nombre de la marca">
- </div>
-
- <a class="scroll-cue" href="#planes">DESCUBRE LOS PLANES <span>↓</span></a>
-</section>
-
-<section class="trust-strip" aria-label="Ventajas">
- <div><strong>01</strong><span>Planes claros</span></div>
- <div><strong>02</strong><span>Recursos definidos</span></div>
- <div><strong>03</strong><span>Gestión sencilla</span></div>
- <div><strong>04</strong><span>Hecho para jugar</span></div>
-</section>
-
-<section class="section plans-section" id="planes">
- <div class="section-heading">
-  <div class="eyebrow">ENCUENTRA TU PODER</div>
-  <h2>Un plan para cada <span>aventura.</span></h2>
-  <p>Elige el material que representa tu próximo mundo. Los recursos de cada plan vienen definidos para que escoger sea sencillo.</p>
- </div>
-
- <div class="plans-grid">
-
-  <article class="public-plan plan-crown">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Corona dorada">
-     <defs><linearGradient id="gold" x2=".9" y2="1"><stop stop-color="#fff0a3"/><stop offset=".5" stop-color="#e5ad31"/><stop offset="1" stop-color="#8e5810"/></linearGradient></defs>
-     <path d="M25 38 48 57 79 15 111 57 135 38 123 103H37Z" fill="url(#gold)" stroke="#ffe9a0" stroke-width="3"/>
-     <path d="M37 91h86v13H37z" fill="#9d6718"/>
-     <circle cx="25" cy="34" r="8" fill="#fff0a3"/>
-     <circle cx="80" cy="13" r="9" fill="#fff0a3"/>
-     <circle cx="135" cy="34" r="8" fill="#fff0a3"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 01</div>
-   <h3>CORONA</h3>
-   <div class="plan-ram">8 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>4 CPU</span><span>80 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
-  <article class="public-plan plan-emerald">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Gema esmeralda">
-     <defs><linearGradient id="emerald" x2="1" y2="1"><stop stop-color="#c0ffe0"/><stop offset=".48" stop-color="#19bd7d"/><stop offset="1" stop-color="#07553f"/></linearGradient></defs>
-     <path d="M35 18 125 18 148 49 80 119 12 49Z" fill="url(#emerald)" stroke="#a4ffda" stroke-width="3"/>
-     <path d="M35 18 80 119 12 49M125 18 80 119 148 49M12 49h136M35 18l45 31 45-31" fill="none" stroke="#d2ffeb" stroke-opacity=".65" stroke-width="2"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 02</div>
-   <h3>ESMERALDA</h3>
-   <div class="plan-ram">12 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>6 CPU</span><span>120 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
-  <article class="public-plan plan-diamond">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Diamante azul">
-     <defs><linearGradient id="diamond" x2="1" y2="1"><stop stop-color="#f0ffff"/><stop offset=".5" stop-color="#65d7ff"/><stop offset="1" stop-color="#2874b5"/></linearGradient></defs>
-     <path d="M36 16h88l28 34-72 72L8 50Z" fill="url(#diamond)" stroke="#d7f8ff" stroke-width="3"/>
-     <path d="M36 16 80 122 8 50M124 16 80 122 152 50M8 50h144M36 16l44 34 44-34" fill="none" stroke="#f1ffff" stroke-opacity=".7" stroke-width="2"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 03</div>
-   <h3>DIAMANTE</h3>
-   <div class="plan-ram">16 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>8 CPU</span><span>160 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
-  <article class="public-plan plan-netherite">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Lingote de netherite">
-     <defs><linearGradient id="netherite" x2="1" y2="1"><stop stop-color="#e4e5e9"/><stop offset=".5" stop-color="#777f91"/><stop offset="1" stop-color="#292f3c"/></linearGradient></defs>
-     <path d="m25 37 55-25 55 25-55 25Z" fill="#c2c5ce" stroke="#f0f1f5" stroke-width="3"/>
-     <path d="M25 37v49l55 31V62Z" fill="#555d6b" stroke="#aab0bc" stroke-width="3"/>
-     <path d="M135 37v49l-55 31V62Z" fill="url(#netherite)" stroke="#d3d5dc" stroke-width="3"/>
-     <path d="m43 42 37-17 37 17-37 18Z" fill="#f1f1f4" opacity=".25"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 04</div>
-   <h3>NETHERITE</h3>
-   <div class="plan-ram">24 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>10 CPU</span><span>240 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
-  <article class="public-plan plan-ruby">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Gema rubí">
-     <defs><linearGradient id="ruby" x2="1" y2="1"><stop stop-color="#ffc7d2"/><stop offset=".5" stop-color="#e94368"/><stop offset="1" stop-color="#78142e"/></linearGradient></defs>
-     <path d="M35 18 125 18 148 49 80 119 12 49Z" fill="url(#ruby)" stroke="#ffc4d1" stroke-width="3"/>
-     <path d="M35 18 80 119 12 49M125 18 80 119 148 49M12 49h136M35 18l45 31 45-31" fill="none" stroke="#ffe1e7" stroke-opacity=".65" stroke-width="2"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 05</div>
-   <h3>RUBÍ</h3>
-   <div class="plan-ram">32 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>12 CPU</span><span>320 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
-  <article class="public-plan plan-amethyst">
-   <div class="plan-image">
-    <svg viewBox="0 0 160 130" role="img" aria-label="Gema amatista">
-     <defs><linearGradient id="amethyst" x2="1" y2="1"><stop stop-color="#f4ddff"/><stop offset=".5" stop-color="#a978e8"/><stop offset="1" stop-color="#503087"/></linearGradient></defs>
-     <path d="M35 18 125 18 148 49 80 119 12 49Z" fill="url(#amethyst)" stroke="#efd9ff" stroke-width="3"/>
-     <path d="M35 18 80 119 12 49M125 18 80 119 148 49M12 49h136M35 18l45 31 45-31" fill="none" stroke="#fff0ff" stroke-opacity=".65" stroke-width="2"/>
-    </svg>
-   </div>
-   <div class="plan-tier">PLAN 06</div>
-   <h3>AMATISTA</h3>
-   <div class="plan-ram">48 <small>GB RAM</small></div>
-   <div class="plan-specs"><span>16 CPU</span><span>480 GB SSD</span></div>
-   <div class="plan-price">PRECIO <strong>PRÓXIMAMENTE</strong></div>
-  </article>
-
- </div>
-
- <p class="plans-note">
-  Los planes y sus recursos se muestran como catálogo informativo.
-  La contratación y asignación real estarán disponibles cuando se active el sistema de hosting.
- </p>
-</section>
-
-<section class="feature-section" id="caracteristicas">
- <div class="feature-layout">
-  <div class="feature-copy">
-   <div class="eyebrow">POR QUÉ ELITEHOSTX</div>
-   <h2>Todo lo que necesitas para <span>crear sin límites.</span></h2>
-   <p>Queremos que administrar tu servidor sea tan sencillo como disfrutar de tu mundo.</p>
-   <a class="text-link" href="/dashboard/">Conoce el panel <span>→</span></a>
-  </div>
-
-  <div class="feature-list">
-   <article>
-    <div class="feature-icon">◈</div>
-    <div><h3>Planes transparentes</h3><p>Conoce la memoria, CPU y almacenamiento incluidos antes de elegir.</p></div>
-   </article>
-   <article>
-    <div class="feature-icon">⌘</div>
-    <div><h3>Administración centralizada</h3><p>Un espacio pensado para consultar y gestionar tus servidores.</p></div>
-   </article>
-   <article>
-    <div class="feature-icon">⚡</div>
-    <div><h3>Preparado para crecer</h3><p>Una plataforma que iremos ampliando con nuevas herramientas y funciones.</p></div>
-   </article>
-  </div>
- </div>
-</section>
-
-<section class="section faq-section" id="faq">
- <div class="section-heading">
-  <div class="eyebrow">¿TIENES DUDAS?</div>
-  <h2>Preguntas <span>frecuentes.</span></h2>
- </div>
-
- <div class="faq-list">
-  <details>
-   <summary>¿Qué incluye cada plan?<span>+</span></summary>
-   <p>Cada plan muestra su cantidad de RAM, CPU y almacenamiento SSD. Los recursos están predeterminados.</p>
-  </details>
-  <details>
-   <summary>¿Cuánto cuesta cada plan?<span>+</span></summary>
-   <p>Los precios se anunciarán próximamente.</p>
-  </details>
-  <details>
-   <summary>¿Puedo crear un servidor ahora mismo?<span>+</span></summary>
-   <p>El panel de cuentas está disponible, pero la creación de instancias reales todavía requiere conectar la infraestructura de hosting.</p>
-  </details>
-  <details>
-   <summary>¿Cómo puedo entrar a mi cuenta?<span>+</span></summary>
-   <p>Usa el botón Iniciar sesión en la parte superior o Crear cuenta para registrarte.</p>
-  </details>
- </div>
-</section>
-
-<section class="final-cta">
- <div class="eyebrow">TU PRÓXIMA AVENTURA EMPIEZA AQUÍ</div>
- <h2>Construye algo <span>increíble.</span></h2>
- <p>Tu comunidad. Tus reglas. Tu mundo.</p>
- <a class="button" href="/dashboard/?mode=register">Crear mi cuenta <span>→</span></a>
-</section>
-
-</main>
-
-<footer class="site-footer">
- <a class="site-brand" href="#inicio">
-  <img class="brand-logo" src="/images/elitehostx-logo.png" alt="EliteHostX">
-  <span class="sr-only">EliteHostX</span>
- </a>
- <p>Hosting para mundos extraordinarios.</p>
- <div class="footer-links">
-  <a href="#planes">Planes</a>
-  <a href="#caracteristicas">Características</a>
-  <a href="#faq">Ayuda</a>
-  <a href="/dashboard/">Mi cuenta</a>
- </div>
- <small>© 2026 EliteHostX. Todos los derechos reservados.</small>
-</footer>
-
-<script>
-const menuButton = document.getElementById("mobileMenu");
-const nav = document.getElementById("siteNav");
-
-menuButton.addEventListener("click", () => {
- const open = nav.classList.toggle("is-open");
- menuButton.setAttribute("aria-expanded", String(open));
-});
-
-nav.querySelectorAll("a").forEach(link => {
- link.addEventListener("click", () => {
-  nav.classList.remove("is-open");
-  menuButton.setAttribute("aria-expanded", "false");
- });
-});
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
