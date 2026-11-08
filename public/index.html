@@ -171,9 +171,154 @@
       </div>
     </section>
 
-    <section class="page-section" id="section-support" data-title="Support" data-description="Find help with your EliteHostX account.">
-      <div class="content-card support-page"><div class="integration-icon">✦</div><h2>EliteHostX Support</h2><p>For help with your account or questions about hosting plans, contact the EliteHostX support team through your official support channel.</p><p class="support-reminder">Add your real support email or Discord invitation here before publishing this section.</p><span class="integration-status">SUPPORT CHANNEL COMING SOON</span></div>
-    </section>
+    <section class="page-section" id="section-support"
+  data-title="EliteAI Support"
+  data-description="Get help from your EliteHostX AI assistant.">
+
+  <div class="support-header">
+    <div>
+      <span class="support-kicker">✦ ELITEHOSTX INTELLIGENCE</span>
+      <h2>EliteAI <span>Support</span></h2>
+      <p>Your personal hosting assistant and support center.</p>
+    </div>
+    <div class="eliteai-status">
+      <span class="status-dot"></span>
+      ELITEAI SYSTEM
+    </div>
+  </div>
+
+  <div class="support-tabs">
+    <button type="button" class="support-tab active" data-support-view="chat">
+      ✦ AI ASSISTANT
+    </button>
+    <button type="button" class="support-tab" data-support-view="tickets">
+      ◈ MY TICKETS
+    </button>
+    <button type="button" class="support-tab hidden" id="adminSupportTab"
+      data-support-view="admin">
+      ♛ ADMIN PANEL
+    </button>
+  </div>
+
+  <div id="supportNotice" class="support-notice hidden" role="status"></div>
+
+  <!-- AI CHAT -->
+  <div class="support-view active" id="supportChatView">
+    <div class="support-chat-layout">
+
+      <aside class="support-conversations">
+        <div class="support-side-heading">
+          <div>
+            <strong>Conversations</strong>
+            <small>Your AI chat history</small>
+          </div>
+          <button type="button" id="newAIConversation" title="New conversation">＋</button>
+        </div>
+
+        <div id="aiConversationList" class="ai-conversation-list">
+          <p class="support-loading">Loading conversations...</p>
+        </div>
+
+        <div class="ai-sidebar-footer">
+          <span>✦</span>
+          EliteAI · Custom assistant
+        </div>
+      </aside>
+
+      <div class="support-chat-panel">
+        <div class="support-chat-heading">
+          <div class="ai-avatar">✦</div>
+          <div>
+            <strong>EliteAI Assistant</strong>
+            <small><span class="status-dot"></span> Ready to help</small>
+          </div>
+        </div>
+
+        <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite">
+          <div class="ai-welcome-message">
+            <div class="ai-welcome-icon">✦</div>
+            <h3>Welcome to EliteAI</h3>
+            <p>Ask me about EliteHostX, hosting plans, your account or support.</p>
+            <span>How can I help you today?</span>
+          </div>
+        </div>
+
+        <form id="aiChatForm" class="ai-chat-form">
+          <input
+            id="aiChatInput"
+            type="text"
+            maxlength="2000"
+            placeholder="Ask EliteAI a question..."
+            autocomplete="off"
+            required
+          >
+          <button type="submit" id="aiSendButton" aria-label="Send message">
+            SEND <span>➤</span>
+          </button>
+        </form>
+
+        <p class="ai-chat-disclaimer">
+          EliteAI uses EliteHostX's verified knowledge base. Unresolved questions can become support tickets.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER TICKETS -->
+  <div class="support-view hidden" id="supportTicketsView">
+    <div class="support-view-heading">
+      <div>
+        <h3>My support tickets</h3>
+        <p>Track your requests and replies from the support team.</p>
+      </div>
+      <button type="button" class="secondary-button" id="refreshMyTickets">
+        ↻ REFRESH
+      </button>
+    </div>
+
+    <div class="support-ticket-layout">
+      <div id="myTicketList" class="support-ticket-list">
+        <p class="support-loading">Loading tickets...</p>
+      </div>
+
+      <div id="myTicketDetail" class="support-ticket-detail">
+        <div class="ticket-empty">
+          <span>◈</span>
+          <h3>Select a ticket</h3>
+          <p>Choose a ticket to view its messages.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SUPPORT -->
+  <div class="support-view hidden" id="supportAdminView">
+    <div class="support-view-heading">
+      <div>
+        <h3>Support administration</h3>
+        <p>Review user requests and respond to support tickets.</p>
+      </div>
+      <button type="button" class="secondary-button" id="refreshAdminTickets">
+        ↻ REFRESH
+      </button>
+    </div>
+
+    <div class="admin-support-layout">
+      <div id="adminTicketList" class="support-ticket-list">
+        <p class="support-loading">Loading support queue...</p>
+      </div>
+
+      <div id="adminTicketDetail" class="support-ticket-detail">
+        <div class="ticket-empty">
+          <span>♛</span>
+          <h3>Support control center</h3>
+          <p>Select a ticket to review and answer it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
 
     <footer><div class="footer-brand"><img src="/images/elitehostx-logo.png" alt="EliteHostX"><span>EliteHostX</span></div><p>© 2026 EliteHostX. All rights reserved.</p><p>POWERED BY ELITEHOSTX</p></footer>
   </main>
