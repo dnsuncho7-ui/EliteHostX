@@ -2263,3 +2263,154 @@ footer {
     font-size: 8px;
   }
 }
+
+
+/* =========================================
+   ELITEHOSTX SUPPORT — FINAL DESIGN OVERRIDES
+========================================= */
+
+#section-support {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+#section-support .support-header {
+  min-height: 190px;
+  border-color: rgba(245,189,53,.32);
+  box-shadow: 0 18px 50px rgba(0,0,0,.35),
+              inset 0 1px rgba(255,255,255,.035);
+}
+
+#section-support .support-overview-card {
+  background:
+    linear-gradient(145deg,rgba(245,189,53,.07),transparent 65%),
+    #120e08;
+  border-color: rgba(245,189,53,.2);
+}
+
+#section-support .support-tabs {
+  gap: 12px;
+}
+
+#section-support .support-tab {
+  min-height: 43px;
+}
+
+#section-support .support-workspace-heading {
+  padding: 8px 0;
+}
+
+#section-support .support-new-ticket {
+  border-color: rgba(245,189,53,.38);
+  box-shadow: 0 20px 55px rgba(0,0,0,.4);
+}
+
+#section-support .support-ticket-layout,
+#section-support .admin-support-layout {
+  min-height: 540px;
+  gap: 17px;
+}
+
+#section-support .support-ticket-sidebar,
+#section-support .support-ticket-detail {
+  border-color: rgba(245,189,53,.25);
+  box-shadow: 0 15px 40px rgba(0,0,0,.28);
+}
+
+#section-support .support-ticket-sidebar-heading {
+  background: linear-gradient(100deg,#211707,#120d07);
+}
+
+#section-support .support-ticket-item {
+  position: relative;
+  border: 1px solid rgba(245,189,53,.09);
+  background: linear-gradient(120deg,#151008,#0d0a06);
+}
+
+#section-support .support-ticket-item.active {
+  border-color: rgba(245,189,53,.55);
+  background: linear-gradient(110deg,#30220d,#171006);
+  box-shadow: inset 3px 0 var(--gold),
+              0 7px 20px rgba(0,0,0,.2);
+}
+
+#section-support .ticket-category {
+  background: rgba(245,189,53,.1);
+  border-color: rgba(245,189,53,.25);
+}
+
+#section-support .support-ticket-detail {
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(245,189,53,.09),transparent 50%),
+    linear-gradient(145deg,#171107,#0b0805);
+}
+
+#section-support .ticket-message {
+  max-width: 90%;
+  border-color: rgba(245,189,53,.22);
+}
+
+#section-support .ticket-admin-message {
+  align-self: flex-end;
+  border-color: rgba(74,222,128,.28);
+}
+
+#section-support .ticket-reply-form {
+  margin-top: 8px;
+}
+
+#section-support .ticket-reply-form textarea {
+  min-height: 115px;
+}
+
+#section-support button:focus-visible,
+#section-support input:focus-visible,
+#section-support select:focus-visible,
+#section-support textarea:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+#section-support .support-footer-note {
+  margin-top: 30px;
+}
+
+@media(max-width:900px) {
+  #section-support .support-ticket-layout,
+  #section-support .admin-support-layout {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  #section-support .support-ticket-sidebar {
+    max-height: 340px;
+  }
+
+  #section-support .support-ticket-detail {
+    min-height: 420px;
+  }
+}
+
+@media(max-width:600px) {
+  #section-support .support-header {
+    padding: 21px;
+  }
+
+  #section-support .support-overview {
+    grid-template-columns: 1fr;
+  }
+
+  #section-support .support-ticket-layout,
+  #section-support .admin-support-layout {
+    gap: 12px;
+  }
+
+  #section-support .ticket-message {
+    max-width: 100%;
+  }
+
+  #section-support .support-ticket-detail {
+    padding: 12px;
+  }
+}
