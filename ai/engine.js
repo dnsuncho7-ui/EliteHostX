@@ -47,19 +47,45 @@ function findKnowledge(message) {
 
     const results = KNOWLEDGE.map(item => {
         let score = 0;
+        let matchedKeywords = 0;
+        let longestMatch = 0;
 
         for (const keyword of item.keywords) {
             const normalizedKeyword = normalize(keyword);
 
+            if (!normalizedKeyword) continue;
+
             if (normalizedMessage.includes(normalizedKeyword)) {
-                score += normalizedKeyword.split(" ").length * 3;
+                const wordCount = normalizedKeyword.split(" ").length;
+
+                score += wordCount * 10;
+                matchedKeywords++;
+
+                if (wordCount > longestMatch) {
+                    longestMatch = wordCount;
+                }
             }
         }
 
-        return { item, score };
+        // Priorizar frases específicas y varias coincidencias.
+        score += matchedKeywords * 2;
+        score += longestMatch * 5;
+
+        return {
+            item,
+            score,
+            matchedKeywords,
+            longestMatch
+        };
     });
 
-    results.sort((a, b) => b.score - a.score);
+    results.sort((a, b) => {
+        if (b.score !== a.score) {
+            return b.score - a.score;
+        }
+
+        return b.longestMatch - a.longestMatch;
+    });
 
     if (!results.length || results[0].score === 0) {
         return null;
@@ -73,23 +99,26 @@ async function generateResponse(input) {
 
     if (!message) {
         return {
-            answer: "Escribe una pregunta para que pueda ayudarte.",
+            answer: "Escribe una pregunta para que pueda ayudarte con EliteHostX.",
             category: "other",
             confidence: 0
         };
     }
 
     if (isGreeting(message)) {
+        const greeting = KNOWLEDGE.find(item => item.id === "greeting");
+
         return {
-            answer: "¡Hola! Soy EliteAI, el asistente de EliteHostX. ¿Qué te gustaría saber sobre nuestros servicios?",
+            answer: greeting.answer,
             category: "other",
-            confidence: 1
+            confidence: 1,
+            sources: []
         };
     }
 
     if (!isEliteHostTopic(message)) {
         return {
-            answer: "Solo puedo responder preguntas relacionadas con EliteHostX. ¿Qué te gustaría saber sobre nuestra web o nuestros servicios?",
+            answer: "Soy EliteAI, el asistente de EliteHostX. Mi conocimiento está limitado a nuestra plataforma, nuestros servicios, planes de hosting, cuentas y herramientas del dashboard. No puedo responder preguntas generales que no estén relacionadas con EliteHostX, pero puedo ayudarte con cualquier consulta sobre nuestros servicios.",
             category: "other",
             confidence: 1,
             sources: []
@@ -113,13 +142,15 @@ async function generateResponse(input) {
     try {
         const result = await searchSite(message);
 
-        if (result.found) {
+        if (result.found && result.fragments?.length) {
             const answer = [
-                "He encontrado esta información en EliteHostX:",
+                "He encontrado información relacionada en las páginas públicas de EliteHostX.",
+                "",
+                "### Información encontrada",
                 "",
                 ...result.fragments.map(text => "• " + text),
                 "",
-                "Fuentes consultadas:",
+                "### Fuentes consultadas",
                 ...result.sources.map(source =>
                     "• " + source.title + ": " + source.url
                 )
@@ -138,7 +169,7 @@ async function generateResponse(input) {
     }
 
     return {
-        answer: "No encontré información suficiente sobre esa pregunta en las páginas públicas de EliteHostX. No quiero inventarte una respuesta. Puedes consultar nuestro Support Center.",
+        answer: "He revisado la información disponible en la base de conocimientos y en las páginas públicas de EliteHostX, pero no encontré datos suficientes para responder esa pregunta con precisión.\n\nPrefiero no inventar características, precios o funciones que no estén confirmados.\n\nSi necesitas una respuesta específica sobre tu cuenta, un plan o un problema técnico, puedes entrar en Support Center y crear un ticket para que el equipo revise tu consulta.",
         category: "other",
         confidence: 0,
         sources: []
