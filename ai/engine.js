@@ -1,4 +1,5 @@
 
+const { KNOWLEDGE } = require("./knowledge");
 const { searchSite } = require("./site-reader");
 
 function normalize(text) {
@@ -14,15 +15,16 @@ function normalize(text) {
 const TOPIC_WORDS = [
     "elitehostx", "elitehost", "hosting", "minecraft",
     "servidor", "servidores", "server", "servers",
-    "plan", "planes", "ram", "cpu", "ssd",
-    "dashboard", "panel", "cuenta", "registro",
-    "login", "sesion", "contrasena", "soporte",
-    "support", "ticket", "tickets", "factura",
-    "pago", "pagos", "precio", "precios",
-    "consola", "console", "archivo", "archivos",
-    "file manager", "crear servidor", "instancia",
-    "pterodactyl", "wings", "rubí", "amatista",
-    "corona", "esmeralda", "diamante", "netherite"
+    "plan", "planes", "ram", "procesador", "cpu", "ssd",
+    "dashboard", "panel", "cuenta", "registro", "registrarme",
+    "login", "sesion", "contrasena", "soporte", "support",
+    "ticket", "tickets", "factura", "pago", "pagos",
+    "precio", "precios", "consola", "console", "archivo",
+    "archivos", "file manager", "crear servidor", "instancia",
+    "pterodactyl", "wings", "corona", "esmeralda",
+    "diamante", "netherite", "rubi", "amatista",
+    "paper", "purpur", "spigot", "vanilla", "settings",
+    "configuracion", "configuraciones"
 ];
 
 function isGreeting(message) {
@@ -34,9 +36,36 @@ function isGreeting(message) {
 function isEliteHostTopic(message) {
     const normalized = normalize(message);
 
-    return TOPIC_WORDS.some(word =>
-        normalized.includes(normalize(word))
-    );
+    return TOPIC_WORDS.some(word => {
+        const normalizedWord = normalize(word);
+        return normalized.includes(normalizedWord);
+    });
+}
+
+function findKnowledge(message) {
+    const normalizedMessage = normalize(message);
+
+    const results = KNOWLEDGE.map(item => {
+        let score = 0;
+
+        for (const keyword of item.keywords) {
+            const normalizedKeyword = normalize(keyword);
+
+            if (normalizedMessage.includes(normalizedKeyword)) {
+                score += normalizedKeyword.split(" ").length * 3;
+            }
+        }
+
+        return { item, score };
+    });
+
+    results.sort((a, b) => b.score - a.score);
+
+    if (!results.length || results[0].score === 0) {
+        return null;
+    }
+
+    return results[0].item;
 }
 
 async function generateResponse(input) {
@@ -62,38 +91,57 @@ async function generateResponse(input) {
         return {
             answer: "Solo puedo responder preguntas relacionadas con EliteHostX. ¿Qué te gustaría saber sobre nuestra web o nuestros servicios?",
             category: "other",
-            confidence: 1
-        };
-    }
-
-    const result = await searchSite(message);
-
-    if (!result.found) {
-        return {
-            answer: "No encontré información suficiente sobre esa pregunta en las páginas públicas de EliteHostX. No quiero inventarte una respuesta. Puedes consultar nuestro Support Center.",
-            category: "other",
-            confidence: 0,
+            confidence: 1,
             sources: []
         };
     }
 
-    const answer = [
-        "He encontrado esta información en EliteHostX:",
-        "",
-        ...result.fragments.map(text => "• " + text),
-        "",
-        "Fuentes consultadas:",
-        ...result.sources.map(source =>
-            "• " + source.title + ": " + source.url
-        )
-    ].join("\n");
+    const knownAnswer = findKnowledge(message);
+
+    if (knownAnswer) {
+        return {
+            answer: knownAnswer.answer,
+            category: knownAnswer.category,
+            confidence: 1,
+            sources: [{
+                title: "Base de conocimientos oficial de EliteHostX",
+                url: "https://elitehostx.bond/"
+            }]
+        };
+    }
+
+    try {
+        const result = await searchSite(message);
+
+        if (result.found) {
+            const answer = [
+                "He encontrado esta información en EliteHostX:",
+                "",
+                ...result.fragments.map(text => "• " + text),
+                "",
+                "Fuentes consultadas:",
+                ...result.sources.map(source =>
+                    "• " + source.title + ": " + source.url
+                )
+            ].join("\n");
+
+            return {
+                answer,
+                category: "elitehostx",
+                confidence: 0.8,
+                sources: result.sources || [],
+                pagesRead: result.pagesRead || 0
+            };
+        }
+    } catch (error) {
+        console.error("[ELITEAI] Site reader error:", error);
+    }
 
     return {
-        answer,
-        category: "elitehostx",
-        confidence: 0.8,
-        sources: result.sources,
-        pagesRead: result.pagesRead
+        answer: "No encontré información suficiente sobre esa pregunta en las páginas públicas de EliteHostX. No quiero inventarte una respuesta. Puedes consultar nuestro Support Center.",
+        category: "other",
+        confidence: 0,
+        sources: []
     };
 }
 
