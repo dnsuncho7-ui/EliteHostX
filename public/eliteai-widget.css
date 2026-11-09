@@ -250,3 +250,35 @@
         height: 58px;
     }
 }
+
+
+.eliteai-processing {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #e3c477;
+    font-style: normal;
+}
+
+.eliteai-spinner {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    border: 2px solid rgba(214, 173, 85, 0.2);
+    border-top-color: #e3c477;
+    border-right-color: #e3c477;
+    border-radius: 50%;
+    animation: eliteai-spin 0.75s linear infinite;
+}
+
+@keyframes eliteai-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eliteai-spinner {
+        animation-duration: 2s;
+    }
+}

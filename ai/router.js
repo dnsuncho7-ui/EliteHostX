@@ -31,7 +31,7 @@ function createEliteAIRouter() {
         next();
     });
 
-    router.post("/chat", chatLimiter, (req, res) => {
+    router.post("/chat", chatLimiter, async (req, res) => {
         try {
             const message = req.body?.message;
 
@@ -49,15 +49,18 @@ function createEliteAIRouter() {
                 });
             }
 
-            const result = generateResponse(cleanMessage);
+            const result = await generateResponse(cleanMessage);
 
             return res.json({
                 success: true,
                 assistant: "EliteAI",
-                version: "0.1.0",
+                version: "0.3.0",
+                engine: "EliteAI Native Site Reader",
                 answer: result.answer,
                 category: result.category,
-                confidence: result.confidence
+                confidence: result.confidence,
+                sources: result.sources || [],
+                pagesRead: result.pagesRead || 0
             });
         } catch (error) {
             console.error("[ELITEAI] Error:", error);
@@ -72,9 +75,10 @@ function createEliteAIRouter() {
         res.json({
             success: true,
             name: "EliteAI",
-            version: "0.1.0",
-            engine: "EliteAI Native Engine",
+            version: "0.3.0",
+            engine: "EliteAI Native Site Reader",
             externalProviders: false,
+            website: "https://elitehostx.bond",
             ready: true
         });
     });

@@ -146,7 +146,16 @@
         input.disabled = true;
         sendButton.disabled = true;
 
-        const typing = addMessage("EliteAI está pensando...", "bot typing");
+        const typing = createElement("div", "eliteai-message bot eliteai-processing");
+
+const spinner = createElement("span", "eliteai-spinner");
+spinner.setAttribute("aria-hidden", "true");
+
+const processingText = createElement("span", "", "Procesando...");
+
+typing.append(spinner, processingText);
+messages.appendChild(typing);
+messages.scrollTop = messages.scrollHeight;
 
         try {
             const response = await fetch("/api/eliteai/chat", {
