@@ -2876,3 +2876,204 @@ footer {
     transition: none;
   }
 }
+
+
+/* =========================================
+   ELITEHOSTX — PREMIUM PROFILE EDITOR
+========================================= */
+
+.settings-card {
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(245,189,53,.07), transparent 40%),
+    linear-gradient(145deg, #191208, #0c0905);
+  border: 1px solid rgba(245,189,53,.25);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.28);
+}
+
+.setting-row {
+  padding: 23px 4px;
+  gap: 20px;
+}
+
+.setting-row > div:first-child {
+  min-width: 0;
+}
+
+.setting-row strong {
+  display: block;
+  color: #fff0c2;
+  font-size: 12px;
+  letter-spacing: .4px;
+}
+
+.setting-row p {
+  color: #a99a7c;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.setting-row > button {
+  flex: none;
+  min-width: 115px;
+  padding: 11px 16px;
+  border: 1px solid rgba(245,189,53,.38);
+  border-radius: 9px;
+  background: linear-gradient(135deg,#2b1d09,#171006);
+  color: #ffe9a6;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .8px;
+  box-shadow: 0 5px 16px #0004;
+}
+
+.setting-row > button:hover {
+  border-color: #f5bd35;
+  background: linear-gradient(110deg,#9b6410,#dba52c);
+  color: #160e03;
+  box-shadow: 0 6px 22px rgba(245,189,53,.18);
+}
+
+/* INLINE EDITOR */
+
+.setting-edit-form {
+  position: relative;
+  width: 100%;
+  margin-top: 19px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(245,189,53,.3);
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse at 100% 0%,rgba(245,189,53,.12),transparent 42%),
+    linear-gradient(145deg,#211707,#100c07);
+  box-shadow: 0 12px 32px rgba(0,0,0,.3);
+  animation: profileEditorEnter .3s ease both;
+}
+
+.setting-edit-form::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg,#ffe9a6,#b77b18);
+}
+
+.setting-edit-form label {
+  display: block;
+  margin: 13px 0 8px;
+  color: #e9d5a7;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+
+.setting-edit-form label:first-child {
+  margin-top: 0;
+}
+
+.setting-edit-form input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid rgba(245,189,53,.2);
+  border-radius: 9px;
+  outline: none;
+  background: #090704;
+  color: #fff1cc;
+  font-family: Inter,Arial,sans-serif;
+  font-size: 12px;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+
+.setting-edit-form input::placeholder {
+  color: #81745e;
+}
+
+.setting-edit-form input:hover {
+  border-color: rgba(245,189,53,.4);
+}
+
+.setting-edit-form input:focus {
+  border-color: #f5bd35;
+  background: #110c05;
+  box-shadow: 0 0 0 3px rgba(245,189,53,.1),
+              0 0 18px rgba(245,189,53,.06);
+}
+
+.setting-edit-form button {
+  min-height: 41px;
+  margin-top: 17px;
+  padding: 0 17px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .7px;
+  transition: .2s ease;
+}
+
+.setting-edit-form button[type="submit"] {
+  border: 1px solid #e5ad31;
+  background: linear-gradient(110deg,#9b6410,#e5ad31 48%,#ffe69a);
+  color: #160e03;
+  box-shadow: 0 6px 18px rgba(245,189,53,.13);
+}
+
+.setting-edit-form button[type="submit"]:hover {
+  box-shadow: 0 8px 24px rgba(245,189,53,.25);
+  transform: translateY(-2px);
+}
+
+.setting-edit-form button:not([type="submit"]) {
+  border: 1px solid rgba(245,189,53,.2);
+  background: #171006;
+  color: #c5b594;
+}
+
+.setting-edit-form button:not([type="submit"]):hover {
+  border-color: rgba(245,189,53,.5);
+  color: #ffe9a6;
+  background: #241908;
+}
+
+@keyframes profileEditorEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* MOBILE PROFILE EDITOR */
+
+@media(max-width:700px) {
+  .setting-edit-form {
+    padding: 18px 15px;
+  }
+
+  .setting-edit-form button {
+    width: 100%;
+  }
+
+  .setting-row > button {
+    width: 100%;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .setting-edit-form {
+    animation: none;
+  }
+
+  .setting-edit-form *,
+  .setting-row > button {
+    transition: none;
+  }
+}
