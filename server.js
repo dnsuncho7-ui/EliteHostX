@@ -595,6 +595,173 @@ app.get("/api/me", requireDatabase, (req, res) => {
     });
 });
 
+const profileLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: "Demasiados cambios de perfil. Inténtalo más tarde."
+    }
+});
+
+/* ================================================
+   ELITEHOSTX - ACCOUNT PROFILE MANAGEMENT
+================================================ */
+
+// Change account display name
+app.patch("/api/profile/name", requireDatabase, profileLimiter, async (req, res) => {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user?.id) {
+    return res.status(401).json({
+      error: "You must sign in to update your profile."
+    });
+  }
+
+  const name = String(req.body?.name || "").trim();
+
+  if (name.length < 2 || name.length > 60) {
+    return res.status(400).json({
+      error: "Your display name must contain between 2 and 60 characters."
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE users
+       SET display_name = $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [name, req.user.id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Account not found."
+      });
+    }
+
+    req.user = publicUser(result.rows[0]);
+
+    return res.json({
+      success: true,
+      user: publicUser(result.rows[0])
+    });
+
+  } catch (error) {
+    console.error("[PROFILE] Name update error:", error);
+
+    return res.status(500).json({
+      error: "Unable to update your display name."
+    });
+  }
+});
+
+
+// Change account email
+app.patch("/api/profile/email", requireDatabase, profileLimiter, async (req, res) => {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user?.id) {
+    return res.status(401).json({
+      error: "You must sign in to update your email."
+    });
+  }
+
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const currentPassword = String(req.body?.currentPassword || "");
+
+  if (!validEmail(email)) {
+    return res.status(400).json({
+      error: "Enter a valid email address."
+    });
+  }
+
+  if (!currentPassword || currentPassword.length > 72) {
+    return res.status(400).json({
+      error: "Enter your current password."
+    });
+  }
+
+  try {
+    const accountResult = await pool.query(
+      `SELECT id, provider, password_hash
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [req.user.id]
+    );
+
+    if (!accountResult.rows.length) {
+      return res.status(404).json({
+        error: "Account not found."
+      });
+    }
+
+    const account = accountResult.rows[0];
+
+    // OAuth email addresses must be changed through their provider.
+    if (account.provider !== "local") {
+      return res.status(403).json({
+        error: "Your email is managed by your Google or Discord account."
+      });
+    }
+
+    if (!account.password_hash) {
+      return res.status(400).json({
+        error: "This account does not have a local password."
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      account.password_hash
+    );
+
+    if (!passwordMatches) {
+      return res.status(403).json({
+        error: "Your current password is incorrect."
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE users
+ SET email = $1,
+     provider_id = $1,
+     updated_at = NOW()
+ WHERE id = $2
+   AND provider = 'local'
+ RETURNING *`,
+      [email, req.user.id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Account not found."
+      });
+    }
+
+    req.user = publicUser(result.rows[0]);
+
+    return res.json({
+      success: true,
+      user: publicUser(result.rows[0])
+    });
+
+  } catch (error) {
+    // PostgreSQL unique constraint violation.
+    if (error.code === "23505") {
+      return res.status(409).json({
+        error: "That email address is already registered."
+      });
+    }
+
+    console.error("[PROFILE] Email update error:", error);
+
+    return res.status(500).json({
+      error: "Unable to update your email address."
+    });
+  }
+});
+
 // ==========================================
 // LOGOUT
 // ==========================================

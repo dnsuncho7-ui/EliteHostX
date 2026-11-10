@@ -8,6 +8,261 @@ const serverContainer = document.getElementById("serverContainer");
 
 let currentUser = null;
 
+
+/* --------------------------------
+   ELITEHOSTX MODALS AND TOASTS
+-------------------------------- */
+
+function showEliteToast(message, type = "success") {
+  let stack = document.querySelector(".ehx-toast-stack");
+
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.className = "ehx-toast-stack";
+    stack.setAttribute("aria-live", "polite");
+    document.body.appendChild(stack);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `ehx-toast ehx-toast-${type}`;
+
+  const mark = document.createElement("span");
+  mark.className = "ehx-toast-mark";
+  mark.textContent = type === "error" ? "!" : type === "info" ? "i" : "✓";
+
+  const text = document.createElement("span");
+  text.textContent = message;
+
+  toast.append(mark, text);
+  stack.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.remove();
+
+    if (!stack.children.length) {
+      stack.remove();
+    }
+  }, 4000);
+}
+
+function openEliteModal({
+  title = "EliteHostX",
+  description = "",
+  fields = [],
+  confirmText = "CONFIRM",
+  cancelText = "CANCEL",
+  danger = false
+} = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "ehx-modal-overlay";
+
+    const card = document.createElement("section");
+    card.className = "ehx-modal-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-labelledby", "ehxModalTitle");
+
+    const header = document.createElement("header");
+    header.className = "ehx-modal-header";
+
+    const heading = document.createElement("div");
+    heading.innerHTML = `
+      <span class="ehx-modal-kicker">ELITEHOSTX ACCOUNT</span>
+      <h2 id="ehxModalTitle">${escapeModalHTML(title)}</h2>
+    `;
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "ehx-modal-close";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Close");
+
+    header.append(heading, close);
+
+    const body = document.createElement("div");
+    body.className = "ehx-modal-body";
+
+    if (description) {
+      const paragraph = document.createElement("p");
+      paragraph.className = "ehx-modal-description";
+      paragraph.textContent = description;
+      body.appendChild(paragraph);
+    }
+
+    const controls = [];
+
+    fields.forEach(field => {
+      const wrapper = document.createElement("label");
+      wrapper.className = "ehx-modal-field";
+      wrapper.textContent = field.label;
+
+      const input = document.createElement("input");
+      input.type = field.type || "text";
+      input.name = field.name;
+      input.placeholder = field.placeholder || "";
+      input.value = field.value || "";
+      input.required = field.required !== false;
+      input.autocomplete = field.autocomplete || "off";
+
+      if (field.maxLength) {
+        input.maxLength = field.maxLength;
+      }
+
+      wrapper.appendChild(input);
+      body.appendChild(wrapper);
+      controls.push(input);
+    });
+
+    const error = document.createElement("p");
+    error.className = "ehx-modal-error";
+    error.hidden = true;
+    body.appendChild(error);
+
+    const footer = document.createElement("footer");
+    footer.className = "ehx-modal-footer";
+
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "ehx-modal-cancel";
+    cancel.textContent = cancelText;
+
+    const submit = document.createElement("button");
+    submit.type = "button";
+    submit.className = "ehx-modal-submit";
+    submit.textContent = confirmText;
+
+    if (danger) {
+      submit.classList.add("danger");
+    }
+
+    footer.append(cancel, submit);
+    card.append(header, body, footer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    let finished = false;
+
+    function finish(value) {
+      if (finished) return;
+      finished = true;
+      document.removeEventListener("keydown", onKeyDown);
+      overlay.remove();
+      resolve(value);
+    }
+
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        finish(null);
+      }
+
+      if (event.key === "Enter" && event.target.tagName !== "TEXTAREA") {
+        event.preventDefault();
+        submit.click();
+      }
+    }
+
+    function showError(message) {
+      error.textContent = message;
+      error.hidden = false;
+    }
+
+    close.addEventListener("click", () => finish(null));
+    cancel.addEventListener("click", () => finish(null));
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) finish(null);
+    });
+
+    submit.addEventListener("click", () => {
+      const values = Object.fromEntries(
+        controls.map(input => [
+          input.name,
+          input.type === "password"
+            ? input.value
+            : input.value.trim()
+        ])
+      );
+
+      for (const input of controls) {
+        if (input.required && !input.value.trim()) {
+          showError("Please complete all required fields.");
+          input.focus();
+          return;
+        }
+      }
+
+      finish(values);
+    });
+
+    document.addEventListener("keydown", onKeyDown);
+
+    if (controls.length) {
+      controls[0].focus();
+    } else {
+      submit.focus();
+    }
+  });
+}
+
+function escapeModalHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
+async function profileRequest(path, payload) {
+  const response = await fetch(path, {
+    method: "PATCH",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || "Unable to update your profile.");
+  }
+
+  if (!data.user) {
+    throw new Error("The server did not return the updated profile.");
+  }
+
+  return data.user;
+}
+
+function refreshProfileDisplay() {
+  if (!currentUser) return;
+
+  const displayName = currentUser.name || currentUser.email || "User";
+
+  document.getElementById("profileAvatar").textContent =
+    displayName.charAt(0).toUpperCase();
+
+  document.getElementById("profileAvatar").title = displayName;
+  document.getElementById("accountName").textContent = displayName;
+
+  document.getElementById("settingsCurrentName").textContent =
+    currentUser.name || "Not set";
+
+  document.getElementById("settingsEmail").textContent =
+    currentUser.email || "Not available";
+}
+
 const HOSTING_PLANS = [
   { id: "corona", name: "CORONA", ram: 8, cpu: 4, disk: 80, color: "#e7bd45", glow: "#e7bd45", gem: "crown" },
   { id: "esmeralda", name: "ESMERALDA", ram: 12, cpu: 6, disk: 120, color: "#35d39a", glow: "#20b879", gem: "emerald" },
@@ -446,43 +701,109 @@ async function logout() {
     setAuthMode("login");
   } catch (error) {
     console.error("Logout error:", error);
-    alert(error.message || "Unable to sign out.");
+    showEliteToast(error.message || "Unable to sign out.", "error");
   }
 }
 
 document.getElementById("logoutButton").addEventListener("click", logout);
 document.getElementById("settingsLogout").addEventListener("click", logout);
 
+
 /* --------------------------------
    ACCOUNT SETTINGS
 -------------------------------- */
 
-document.getElementById("changeNameButton").addEventListener("click", () => {
+document.getElementById("changeNameButton").addEventListener("click", async () => {
   if (!currentUser) return;
 
-  const nextName = prompt(
-    "Enter the display name for this browser session:",
-    currentUser.name || ""
-  );
+  const values = await openEliteModal({
+    title: "Change display name",
+    description: "Choose the name displayed on your EliteHostX account.",
+    fields: [
+      {
+        name: "name",
+        label: "Display name",
+        placeholder: "Your new name",
+        value: currentUser.name || "",
+        maxLength: 60,
+        autocomplete: "name"
+      }
+    ],
+    confirmText: "SAVE CHANGES"
+  });
 
-  if (nextName === null) return;
+  if (!values) return;
 
-  const cleanName = nextName.trim().slice(0, 60);
+  const cleanName = values.name.trim();
 
   if (cleanName.length < 2) {
-    alert("The display name must contain at least 2 characters.");
+    showEliteToast("Your name must contain at least 2 characters.", "error");
     return;
   }
 
-  currentUser.name = cleanName;
+  try {
+    const updatedUser = await profileRequest("/api/profile/name", {
+      name: cleanName
+    });
 
-  document.getElementById("accountName").textContent = cleanName;
-  document.getElementById("profileAvatar").textContent =
-    cleanName.charAt(0).toUpperCase();
+    currentUser = { ...currentUser, ...updatedUser };
+    refreshProfileDisplay();
 
-  document.getElementById("settingsCurrentName").textContent = cleanName;
+    showEliteToast("Your display name has been updated.");
+  } catch (error) {
+    showEliteToast(error.message, "error");
+  }
+});
 
-  alert("Display name updated for this session. Permanent profile editing is not connected yet.");
+document.getElementById("changeEmailButton")?.addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  if (currentUser.provider && currentUser.provider !== "local") {
+    showEliteToast(
+      "Email changes are unavailable for accounts connected through Google or Discord.",
+      "info"
+    );
+    return;
+  }
+
+  const values = await openEliteModal({
+    title: "Change email address",
+    description: "Enter your new email and your current password to confirm this change.",
+    fields: [
+      {
+        name: "email",
+        label: "New email address",
+        type: "email",
+        placeholder: "you@example.com",
+        value: currentUser.email || "",
+        autocomplete: "email"
+      },
+      {
+        name: "password",
+        label: "Current password",
+        type: "password",
+        placeholder: "Enter your current password",
+        autocomplete: "current-password"
+      }
+    ],
+    confirmText: "UPDATE EMAIL"
+  });
+
+  if (!values) return;
+
+  try {
+    const updatedUser = await profileRequest("/api/profile/email", {
+      email: values.email,
+      currentPassword: values.password
+    });
+
+    currentUser = { ...currentUser, ...updatedUser };
+    refreshProfileDisplay();
+
+    showEliteToast("Your email address has been updated.");
+  } catch (error) {
+    showEliteToast(error.message, "error");
+  }
 });
 
 /* --------------------------------
@@ -509,7 +830,7 @@ serverForm.addEventListener("submit", event => {
   );
 
   if (!name || !selectedPlan) {
-    alert("Choose a plan and enter a server name.");
+    showEliteToast("Choose a plan and enter a server name.", "error");
     return;
   }
 
@@ -535,7 +856,10 @@ serverForm.addEventListener("submit", event => {
   renderServers();
   navigateTo("my-servers");
 
-  alert("Configuration saved. A real Minecraft server has not been created yet.");
+  showEliteToast(
+  "Configuration saved locally. A real Minecraft server has not been created yet.",
+  "info"
+);
 });
 
 /* --------------------------------
@@ -601,17 +925,24 @@ function renderServers() {
     remove.className = "danger-button";
     remove.textContent = "DELETE";
 
-    remove.addEventListener("click", () => {
-      if (!confirm(`Delete the saved configuration "${server.name}"?`)) {
-        return;
-      }
+    remove.addEventListener("click", async () => {
+  const confirmation = await openEliteModal({
+    title: "Delete configuration",
+    description: `Are you sure you want to delete "${server.name}"? This only deletes the saved configuration.`,
+    confirmText: "DELETE",
+    danger: true
+  });
 
-      saveServers(
-        getServers().filter(item => item.id !== server.id)
-      );
+  if (!confirmation) return;
 
-      renderServers();
-    });
+  saveServers(
+    getServers().filter(item => item.id !== server.id)
+  );
+
+  renderServers();
+
+  showEliteToast("Configuration deleted.", "success");
+});
 
     info.append(title, details, status);
     actions.append(remove);

@@ -2444,3 +2444,435 @@ footer {
     background: rgba(231, 189, 69, .15);
     border-color: #e7bd45;
 }
+
+/* =========================================
+   ELITEHOSTX - MODALS AND TOASTS
+========================================= */
+
+.ehx-modal-root {
+  position: relative;
+  z-index: 99999;
+}
+
+.ehx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .78);
+  backdrop-filter: blur(7px);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.ehx-modal-overlay.is-visible {
+  opacity: 1;
+}
+
+.ehx-modal-overlay.is-closing {
+  opacity: 0;
+}
+
+.ehx-modal-card {
+  width: min(100%, 460px);
+  max-height: min(90vh, 700px);
+  overflow-y: auto;
+  padding: 25px;
+  border: 1px solid rgba(222, 177, 74, .35);
+  border-radius: 18px;
+  background: #11100e;
+  color: #f5f0e5;
+  box-shadow: 0 25px 90px rgba(0, 0, 0, .65);
+  transform: translateY(14px) scale(.98);
+  transition: transform .2s ease;
+}
+
+.ehx-modal-overlay.is-visible .ehx-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.ehx-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.ehx-modal-emblem {
+  display: grid;
+  place-items: center;
+  flex: 0 0 43px;
+  height: 43px;
+  border: 1px solid rgba(222, 177, 74, .4);
+  border-radius: 12px;
+  background: rgba(222, 177, 74, .1);
+  color: #e5bd59;
+  font-size: 24px;
+}
+
+.ehx-modal-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: #c6a75b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.ehx-modal-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 21px;
+}
+
+.ehx-modal-close {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #aaa;
+  font-size: 27px;
+  cursor: pointer;
+}
+
+.ehx-modal-close:hover {
+  color: #fff;
+}
+
+.ehx-modal-body {
+  margin-top: 20px;
+}
+
+.ehx-modal-description {
+  margin: 0 0 18px;
+  color: #aaa69d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ehx-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.ehx-modal-field label {
+  color: #e8dfca;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ehx-modal-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #39352d;
+  border-radius: 9px;
+  outline: none;
+  background: #090908;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+
+.ehx-modal-field input:focus {
+  border-color: #d7ae4e;
+  box-shadow: 0 0 0 3px rgba(215, 174, 78, .12);
+}
+
+.ehx-modal-field input::placeholder {
+  color: #69645b;
+}
+
+.ehx-modal-field small {
+  color: #89847a;
+  font-size: 11px;
+}
+
+.ehx-modal-error {
+  margin: 12px 0 0;
+  color: #ff7777;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ehx-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ehx-modal-footer button {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  cursor: pointer;
+}
+
+.ehx-modal-cancel {
+  border: 1px solid #464139;
+  background: #1b1915;
+  color: #d0c9bb;
+}
+
+.ehx-modal-cancel:hover {
+  background: #29251e;
+}
+
+.ehx-modal-submit {
+  border: 1px solid #e3bd5e;
+  background: linear-gradient(135deg, #e8c66d, #b8862e);
+  color: #17120a;
+}
+
+.ehx-modal-submit:hover {
+  filter: brightness(1.1);
+}
+
+.ehx-modal-submit.is-danger {
+  border-color: #d45a5a;
+  background: #a93434;
+  color: #fff;
+}
+
+.ehx-modal-footer button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* TOAST NOTIFICATIONS */
+
+.ehx-toast-stack {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(370px, calc(100vw - 32px));
+}
+
+.ehx-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 17px;
+  border: 1px solid #51452c;
+  border-radius: 12px;
+  background: #15130f;
+  color: #eee8dc;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, .4);
+  font-size: 13px;
+  line-height: 1.5;
+  animation: ehxToastEnter .25s ease both;
+}
+
+.ehx-toast-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: rgba(222, 177, 74, .15);
+  color: #e5bd59;
+  font-weight: 900;
+}
+
+.ehx-toast-success {
+  border-color: rgba(65, 190, 125, .4);
+}
+
+.ehx-toast-success .ehx-toast-mark {
+  background: rgba(65, 190, 125, .15);
+  color: #55d995;
+}
+
+.ehx-toast-error {
+  border-color: rgba(230, 75, 75, .45);
+}
+
+.ehx-toast-error .ehx-toast-mark {
+  background: rgba(230, 75, 75, .15);
+  color: #ff7777;
+}
+
+.ehx-toast-info {
+  border-color: rgba(90, 160, 230, .4);
+}
+
+.ehx-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+@keyframes ehxToastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 520px) {
+  .ehx-modal-card {
+    padding: 20px;
+  }
+
+  .ehx-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .ehx-modal-footer button {
+    width: 100%;
+  }
+
+  .ehx-toast-stack {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ehx-modal-overlay,
+  .ehx-modal-card,
+  .ehx-toast {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* =========================================
+   ELITEHOSTX - TOAST NOTIFICATIONS
+========================================= */
+
+.elite-toast-container {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.elite-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 17px;
+  color: #f5f1e8;
+  background: linear-gradient(135deg, #1b1914, #0d0c0a);
+  border: 1px solid rgba(218, 170, 66, 0.4);
+  border-left: 3px solid #d8aa42;
+  border-radius: 10px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateX(18px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: auto;
+}
+
+.elite-toast.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.elite-toast-icon {
+  flex: 0 0 auto;
+  color: #e9c36e;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.elite-toast-content {
+  min-width: 0;
+}
+
+.elite-toast-title {
+  margin: 0 0 4px;
+  color: #f1d28d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.elite-toast-message {
+  margin: 0;
+  color: #c2bbae;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.elite-toast.success {
+  border-left-color: #55bd83;
+}
+
+.elite-toast.success .elite-toast-icon {
+  color: #70d69d;
+}
+
+.elite-toast.error {
+  border-left-color: #df6558;
+}
+
+.elite-toast.error .elite-toast-icon {
+  color: #ff897b;
+}
+
+.elite-toast.info {
+  border-left-color: #d8aa42;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 520px) {
+  .elite-modal {
+    padding: 23px 19px;
+    border-radius: 14px;
+  }
+
+  .elite-modal-title {
+    font-size: 19px;
+  }
+
+  .elite-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .elite-modal-actions button {
+    width: 100%;
+  }
+
+  .elite-toast-container {
+    top: 12px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elite-modal-overlay,
+  .elite-modal,
+  .elite-toast,
+  .elite-modal-actions button {
+    transition: none;
+  }
+}
