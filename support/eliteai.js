@@ -756,7 +756,10 @@ function createSupportRouter({ pool, requireDatabase }) {
                 client?.release();
             }
         }
-    );
+        );
+
+    return router;
+}
 
 /* ================================================
    EXPORTS
