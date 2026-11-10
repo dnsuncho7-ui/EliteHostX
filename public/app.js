@@ -710,36 +710,48 @@ document.getElementById("settingsLogout").addEventListener("click", logout);
 
 
 /* --------------------------------
-   ACCOUNT SETTINGS
+   ACCOUNT SETTINGS - INLINE EDITING
 -------------------------------- */
 
-document.getElementById("changeNameButton").addEventListener("click", async () => {
+// Abrir edición del nombre
+document.getElementById("changeNameButton").addEventListener("click", () => {
   if (!currentUser) return;
 
-  const values = await openEliteModal({
-    title: "Change display name",
-    description: "Choose the name displayed on your EliteHostX account.",
-    fields: [
-      {
-        name: "name",
-        label: "Display name",
-        placeholder: "Your new name",
-        value: currentUser.name || "",
-        maxLength: 60,
-        autocomplete: "name"
-      }
-    ],
-    confirmText: "SAVE CHANGES"
-  });
+  const form = document.getElementById("editNameForm");
+  const input = document.getElementById("editNameInput");
+  const button = document.getElementById("changeNameButton");
 
-  if (!values) return;
+  input.value = currentUser.name || "";
+  form.classList.remove("hidden");
+  button.classList.add("hidden");
+  input.focus();
+});
 
-  const cleanName = values.name.trim();
+// Cancelar edición del nombre
+document.getElementById("cancelNameEdit").addEventListener("click", () => {
+  document.getElementById("editNameForm").classList.add("hidden");
+  document.getElementById("changeNameButton").classList.remove("hidden");
+});
 
-  if (cleanName.length < 2) {
-    showEliteToast("Your name must contain at least 2 characters.", "error");
+// Guardar nombre
+document.getElementById("editNameForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const form = event.currentTarget;
+  const input = document.getElementById("editNameInput");
+  const button = form.querySelector('[type="submit"]');
+  const cleanName = input.value.trim();
+
+  if (cleanName.length < 2 || cleanName.length > 60) {
+    showEliteToast("Your name must contain between 2 and 60 characters.", "error");
+    input.focus();
     return;
   }
+
+  button.disabled = true;
+  button.textContent = "SAVING...";
 
   try {
     const updatedUser = await profileRequest("/api/profile/name", {
@@ -749,13 +761,22 @@ document.getElementById("changeNameButton").addEventListener("click", async () =
     currentUser = { ...currentUser, ...updatedUser };
     refreshProfileDisplay();
 
+    form.reset();
+    form.classList.add("hidden");
+    document.getElementById("changeNameButton").classList.remove("hidden");
+
     showEliteToast("Your display name has been updated.");
   } catch (error) {
     showEliteToast(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "SAVE";
   }
 });
 
-document.getElementById("changeEmailButton")?.addEventListener("click", async () => {
+
+// Abrir edición del correo
+document.getElementById("changeEmailButton").addEventListener("click", () => {
   if (!currentUser) return;
 
   if (currentUser.provider && currentUser.provider !== "local") {
@@ -766,43 +787,70 @@ document.getElementById("changeEmailButton")?.addEventListener("click", async ()
     return;
   }
 
-  const values = await openEliteModal({
-    title: "Change email address",
-    description: "Enter your new email and your current password to confirm this change.",
-    fields: [
-      {
-        name: "email",
-        label: "New email address",
-        type: "email",
-        placeholder: "you@example.com",
-        value: currentUser.email || "",
-        autocomplete: "email"
-      },
-      {
-        name: "password",
-        label: "Current password",
-        type: "password",
-        placeholder: "Enter your current password",
-        autocomplete: "current-password"
-      }
-    ],
-    confirmText: "UPDATE EMAIL"
-  });
+  const form = document.getElementById("editEmailForm");
+  const input = document.getElementById("editEmailInput");
+  const password = document.getElementById("editEmailPassword");
+  const button = document.getElementById("changeEmailButton");
 
-  if (!values) return;
+  input.value = "";
+  password.value = "";
+
+  form.classList.remove("hidden");
+  button.classList.add("hidden");
+  input.focus();
+});
+
+// Cancelar edición del correo
+document.getElementById("cancelEmailEdit").addEventListener("click", () => {
+  const form = document.getElementById("editEmailForm");
+
+  form.reset();
+  form.classList.add("hidden");
+
+  document.getElementById("changeEmailButton").classList.remove("hidden");
+});
+
+// Guardar correo
+document.getElementById("editEmailForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const form = event.currentTarget;
+  const emailInput = document.getElementById("editEmailInput");
+  const passwordInput = document.getElementById("editEmailPassword");
+  const button = form.querySelector('[type="submit"]');
+
+  const email = emailInput.value.trim();
+  const currentPassword = passwordInput.value;
+
+  if (!email || !currentPassword) {
+    showEliteToast("Complete both fields.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "SAVING...";
 
   try {
     const updatedUser = await profileRequest("/api/profile/email", {
-      email: values.email,
-      currentPassword: values.password
+      email,
+      currentPassword
     });
 
     currentUser = { ...currentUser, ...updatedUser };
     refreshProfileDisplay();
 
+    form.reset();
+    form.classList.add("hidden");
+    document.getElementById("changeEmailButton").classList.remove("hidden");
+
     showEliteToast("Your email address has been updated.");
   } catch (error) {
     showEliteToast(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "SAVE";
   }
 });
 

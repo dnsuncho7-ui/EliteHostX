@@ -291,44 +291,94 @@
       </div>
     </section>
 
-    <section class="page-section" id="section-settings" data-title="Settings" data-description="Manage the preferences displayed in your account.">
-      <div class="content-card settings-card">
-        <div class="section-heading">
-          <h2>Account settings</h2>
-          <p>Your profile changes are saved to your EliteHostX account.</p>
-        </div>
+<section class="page-section" id="section-settings" data-title="Settings" data-description="Manage your account preferences.">
+  <div class="content-card settings-card">
+    <div class="section-heading">
+      <h2>Account settings</h2>
+      <p>Your profile changes are saved to your EliteHostX account.</p>
+    </div>
 
-        <div class="setting-row">
-          <div>
-            <strong>Display name</strong>
-            <p id="settingsCurrentName">Your account name</p>
+    <!-- DISPLAY NAME -->
+    <div class="setting-row">
+      <div class="setting-main">
+        <strong>Display name</strong>
+        <p id="settingsCurrentName">Your account name</p>
+
+        <form id="editNameForm" class="setting-edit-form hidden">
+          <input
+            type="text"
+            id="editNameInput"
+            class="setting-edit-input"
+            minlength="2"
+            maxlength="60"
+            autocomplete="name"
+            required
+          >
+
+          <div class="setting-edit-actions">
+            <button type="submit" class="setting-save-button">SAVE</button>
+            <button type="button" class="setting-cancel-button" id="cancelNameEdit">CANCEL</button>
           </div>
-          <button type="button" class="secondary-button" id="changeNameButton">CHANGE NAME</button>
-        </div>
-
-        <div class="setting-row">
-  <div>
-    <strong>Email address</strong>
-    <p id="settingsEmail">Your account email</p>
-  </div>
-  <button
-    type="button"
-    class="secondary-button"
-    id="changeEmailButton"
-  >
-    CHANGE EMAIL
-  </button>
-</div>
-
-        <div class="setting-row">
-          <div>
-            <strong>Session</strong>
-            <p>Sign out of your EliteHostX account on this browser.</p>
-          </div>
-          <button type="button" class="danger-button" id="settingsLogout">LOG OUT</button>
-        </div>
+        </form>
       </div>
-    </section>
+
+      <button type="button" class="secondary-button" id="changeNameButton">
+        CHANGE NAME
+      </button>
+    </div>
+
+    <!-- EMAIL -->
+    <div class="setting-row">
+      <div class="setting-main">
+        <strong>Email address</strong>
+        <p id="settingsEmail">Your account email</p>
+
+        <form id="editEmailForm" class="setting-edit-form hidden">
+          <input
+            type="email"
+            id="editEmailInput"
+            class="setting-edit-input"
+            maxlength="320"
+            autocomplete="email"
+            placeholder="New email address"
+            required
+          >
+
+          <input
+            type="password"
+            id="editEmailPassword"
+            class="setting-edit-input"
+            maxlength="72"
+            autocomplete="current-password"
+            placeholder="Current password"
+            required
+          >
+
+          <div class="setting-edit-actions">
+            <button type="submit" class="setting-save-button">SAVE</button>
+            <button type="button" class="setting-cancel-button" id="cancelEmailEdit">CANCEL</button>
+          </div>
+        </form>
+      </div>
+
+      <button type="button" class="secondary-button" id="changeEmailButton">
+        CHANGE EMAIL
+      </button>
+    </div>
+
+    <!-- SESSION -->
+    <div class="setting-row">
+      <div>
+        <strong>Session</strong>
+        <p>Sign out of your EliteHostX account on this browser.</p>
+      </div>
+
+      <button type="button" class="danger-button" id="settingsLogout">
+        LOG OUT
+      </button>
+    </div>
+  </div>
+</section>
 
     <!-- ELITEHOSTX SUPPORT CENTER -->
     <section
