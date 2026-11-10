@@ -348,11 +348,14 @@ function createSupportRouter({ pool, requireDatabase }) {
         }
     });
 
+   
     /* --------------------------------
        DELETE OWN TICKET
     -------------------------------- */
 
     router.delete("/tickets/:id", async (req, res, next) => {
+        let client;
+
         try {
             const ticketId = validId(req.params.id);
 
@@ -362,21 +365,41 @@ function createSupportRouter({ pool, requireDatabase }) {
                 });
             }
 
-            const result = await pool.query(
-                `DELETE FROM support_tickets
+            client = await pool.connect();
+            await client.query("BEGIN");
+
+            const ticketResult = await client.query(
+                `SELECT id
+                 FROM support_tickets
                  WHERE id = $1 AND user_id = $2
-                 RETURNING id`,
+                 FOR UPDATE`,
                 [ticketId, req.user.id]
             );
 
-            if (!result.rows.length) {
+            if (!ticketResult.rows.length) {
+                await client.query("ROLLBACK");
+
                 return res.status(404).json({
                     error: "Ticket no encontrado."
                 });
             }
 
+            await client.query(
+                `DELETE FROM support_ticket_messages
+                 WHERE ticket_id = $1`,
+                [ticketId]
+            );
+
+            await client.query(
+                `DELETE FROM support_tickets
+                 WHERE id = $1 AND user_id = $2`,
+                [ticketId, req.user.id]
+            );
+
+            await client.query("COMMIT");
+
             console.log(
-                `[SUPPORT] Ticket #${ticketId} deleted by owner ${req.user.id}.`
+                `[SUPPORT] Ticket #${ticketId} deleted by user ${req.user.id}.`
             );
 
             return res.json({
@@ -385,8 +408,15 @@ function createSupportRouter({ pool, requireDatabase }) {
             });
 
         } catch (error) {
+            if (client) {
+                await client.query("ROLLBACK").catch(() => {});
+            }
+
             console.error("[SUPPORT] User ticket deletion error:", error);
             next(error);
+
+        } finally {
+            client?.release();
         }
     });
 
@@ -652,7 +682,8 @@ function createSupportRouter({ pool, requireDatabase }) {
         }
     );
 
-        /* --------------------------------
+
+    /* --------------------------------
        ADMIN DELETE TICKET
     -------------------------------- */
 
@@ -660,6 +691,8 @@ function createSupportRouter({ pool, requireDatabase }) {
         "/admin/tickets/:id",
         requireAdmin,
         async (req, res, next) => {
+            let client;
+
             try {
                 const ticketId = validId(req.params.id);
 
@@ -669,18 +702,38 @@ function createSupportRouter({ pool, requireDatabase }) {
                     });
                 }
 
-                const result = await pool.query(
-                    `DELETE FROM support_tickets
+                client = await pool.connect();
+                await client.query("BEGIN");
+
+                const ticketResult = await client.query(
+                    `SELECT id
+                     FROM support_tickets
                      WHERE id = $1
-                     RETURNING id`,
+                     FOR UPDATE`,
                     [ticketId]
                 );
 
-                if (!result.rows.length) {
+                if (!ticketResult.rows.length) {
+                    await client.query("ROLLBACK");
+
                     return res.status(404).json({
                         error: "Ticket no encontrado."
                     });
                 }
+
+                await client.query(
+                    `DELETE FROM support_ticket_messages
+                     WHERE ticket_id = $1`,
+                    [ticketId]
+                );
+
+                await client.query(
+                    `DELETE FROM support_tickets
+                     WHERE id = $1`,
+                    [ticketId]
+                );
+
+                await client.query("COMMIT");
 
                 console.log(
                     `[SUPPORT] Ticket #${ticketId} deleted by admin ${req.user.id}.`
@@ -692,14 +745,18 @@ function createSupportRouter({ pool, requireDatabase }) {
                 });
 
             } catch (error) {
+                if (client) {
+                    await client.query("ROLLBACK").catch(() => {});
+                }
+
                 console.error("[SUPPORT] Admin ticket deletion error:", error);
                 next(error);
+
+            } finally {
+                client?.release();
             }
         }
     );
-
-    return router;
-}
 
 /* ================================================
    EXPORTS
