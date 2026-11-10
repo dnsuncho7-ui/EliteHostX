@@ -1403,9 +1403,29 @@ async function loadMyTickets() {
       >
         <span class="ticket-item-top">
           <strong>${escapeSupportHTML(ticket.subject)}</strong>
-          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
-            ${escapeSupportHTML(getStatusName(ticket.status))}
-          </span>
+          <div class="ticket-detail-actions">
+  <div class="ticket-detail-actions">
+  <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+    ${escapeSupportHTML(getStatusName(ticket.status))}
+  </span>
+
+  <button
+    type="button"
+    id="deleteAdminTicket"
+    class="danger-button"
+  >
+    DELETE TICKET
+  </button>
+</div>
+
+  <button
+    type="button"
+    id="deleteUserTicket"
+    class="danger-button"
+  >
+    DELETE TICKET
+  </button>
+</div>
         </span>
 
         <span class="support-ticket-category">
@@ -1438,6 +1458,42 @@ async function loadMyTickets() {
     list.innerHTML = `
       <p class="support-error">${escapeSupportHTML(error.message)}</p>
     `;
+  }
+}
+
+/* --------------------------------
+   DELETE USER TICKET
+-------------------------------- */
+
+async function deleteUserSupportTicket(ticketId) {
+  const confirmation = await openEliteModal({
+    title: "Delete support ticket",
+    description: `Are you sure you want to permanently delete ticket #${ticketId}? All messages in this conversation will also be deleted.`,
+    confirmText: "DELETE TICKET",
+    danger: true
+  });
+
+  if (!confirmation) return;
+
+  try {
+    await supportRequest(
+      `/tickets/${encodeURIComponent(ticketId)}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    if (String(currentUserTicketId) === String(ticketId)) {
+      currentUserTicketId = null;
+    }
+
+    showEliteToast("Support ticket deleted successfully.", "success");
+
+    await loadMyTickets();
+
+  } catch (error) {
+    console.error("[SUPPORT] Ticket deletion error:", error);
+    showEliteToast(error.message || "Unable to delete ticket.", "error");
   }
 }
 
@@ -1532,6 +1588,11 @@ async function loadUserTicketDetail() {
     }
 
     messageList.scrollTop = messageList.scrollHeight;
+
+document.getElementById("deleteUserTicket")
+  ?.addEventListener("click", () => {
+    deleteUserSupportTicket(ticket.id);
+  });
 
     const form = document.getElementById("userTicketReplyForm");
 
@@ -1842,6 +1903,11 @@ async function loadAdminTicketDetail() {
     document.getElementById("saveAdminTicket")
       ?.addEventListener("click", saveAdminTicketChanges);
 
+      document.getElementById("deleteAdminTicket")
+  ?.addEventListener("click", () => {
+    deleteAdminSupportTicket(ticket.id);
+  });
+
     document.getElementById("adminTicketReplyForm")
       ?.addEventListener("submit", sendAdminTicketReply);
   } catch (error) {
@@ -1850,6 +1916,44 @@ async function loadAdminTicketDetail() {
     detail.innerHTML = `
       <p class="support-error">${escapeSupportHTML(error.message)}</p>
     `;
+  }
+}
+
+/* --------------------------------
+   DELETE ADMIN TICKET
+-------------------------------- */
+
+async function deleteAdminSupportTicket(ticketId) {
+  if (!supportAdmin) return;
+
+  const confirmation = await openEliteModal({
+    title: "Delete customer ticket",
+    description: `Are you sure you want to permanently delete customer ticket #${ticketId}? All messages will also be deleted.`,
+    confirmText: "DELETE TICKET",
+    danger: true
+  });
+
+  if (!confirmation) return;
+
+  try {
+    await supportRequest(
+      `/admin/tickets/${encodeURIComponent(ticketId)}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    if (String(currentAdminTicketId) === String(ticketId)) {
+      currentAdminTicketId = null;
+    }
+
+    showEliteToast("Customer ticket deleted successfully.", "success");
+
+    await loadAdminTickets();
+
+  } catch (error) {
+    console.error("[SUPPORT] Admin ticket deletion error:", error);
+    showEliteToast(error.message || "Unable to delete ticket.", "error");
   }
 }
 

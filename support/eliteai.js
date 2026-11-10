@@ -356,6 +356,48 @@ function createSupportRouter({ pool, requireDatabase }) {
     });
 
     /* --------------------------------
+       DELETE OWN TICKET
+    -------------------------------- */
+
+    router.delete("/tickets/:id", async (req, res, next) => {
+        try {
+            const ticketId = validId(req.params.id);
+
+            if (!ticketId) {
+                return res.status(400).json({
+                    error: "Ticket inválido."
+                });
+            }
+
+            const result = await pool.query(
+                `DELETE FROM support_tickets
+                 WHERE id = $1 AND user_id = $2
+                 RETURNING id`,
+                [ticketId, req.user.id]
+            );
+
+            if (!result.rows.length) {
+                return res.status(404).json({
+                    error: "Ticket no encontrado."
+                });
+            }
+
+            console.log(
+                `[SUPPORT] Ticket #${ticketId} deleted by owner ${req.user.id}.`
+            );
+
+            return res.json({
+                success: true,
+                message: "Ticket eliminado correctamente."
+            });
+
+        } catch (error) {
+            console.error("[SUPPORT] User ticket deletion error:", error);
+            next(error);
+        }
+    });
+
+    /* --------------------------------
        SEND TICKET MESSAGE
     -------------------------------- */
 
@@ -612,6 +654,52 @@ function createSupportRouter({ pool, requireDatabase }) {
                 });
 
             } catch (error) {
+                next(error);
+            }
+        }
+    );
+
+        /* --------------------------------
+       ADMIN DELETE TICKET
+    -------------------------------- */
+
+    router.delete(
+        "/admin/tickets/:id",
+        requireAdmin,
+        async (req, res, next) => {
+            try {
+                const ticketId = validId(req.params.id);
+
+                if (!ticketId) {
+                    return res.status(400).json({
+                        error: "Ticket inválido."
+                    });
+                }
+
+                const result = await pool.query(
+                    `DELETE FROM support_tickets
+                     WHERE id = $1
+                     RETURNING id`,
+                    [ticketId]
+                );
+
+                if (!result.rows.length) {
+                    return res.status(404).json({
+                        error: "Ticket no encontrado."
+                    });
+                }
+
+                console.log(
+                    `[SUPPORT] Ticket #${ticketId} deleted by admin ${req.user.id}.`
+                );
+
+                return res.json({
+                    success: true,
+                    message: "Ticket eliminado correctamente."
+                });
+
+            } catch (error) {
+                console.error("[SUPPORT] Admin ticket deletion error:", error);
                 next(error);
             }
         }
