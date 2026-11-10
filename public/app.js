@@ -1,4 +1,3 @@
-
 "use strict";
 
 const authScreen = document.getElementById("authScreen");
@@ -6,6 +5,7 @@ const dashboard = document.getElementById("appDashboard");
 const serverForm = document.getElementById("serverForm");
 const serverContainer = document.getElementById("serverContainer");
 
+let ownerManagementInitialized = false;
 let currentUser = null;
 
 
@@ -313,6 +313,10 @@ const SECTION_INFO = {
   support: {
     title: "Support Center",
     description: "Contact the EliteHostX support team."
+  },
+  "user-management": {
+    title: "User Management",
+    description: "Manage EliteHostX account roles and permissions."
   }
 };
 
@@ -411,6 +415,14 @@ function navigateTo(section) {
     section = "dashboard";
   }
 
+  if (section === "user-management" && currentUser?.role !== "OWNER") {
+    showEliteToast(
+      "Only the account owner can manage user roles.",
+      "error"
+    );
+    section = "dashboard";
+  }
+
   const targetId = `section-${section}`;
   const targetPage = document.getElementById(targetId);
 
@@ -455,6 +467,10 @@ function navigateTo(section) {
     loadEliteSupport();
   }
 
+  if (section === "user-management") {
+    loadOwnerUsers();
+  }
+
   history.replaceState(null, "", `#${section}`);
 
   window.scrollTo({
@@ -496,12 +512,16 @@ function setAuthMode(mode) {
 function showLogin() {
   currentUser = null;
 
+  document.getElementById("ownerManagementLink")
+    ?.classList.add("hidden");
+
   dashboard.classList.add("hidden");
   authScreen.classList.remove("hidden");
 }
 
 function showDashboard(user) {
   currentUser = user;
+  initializeOwnerManagement();
 
   authScreen.classList.add("hidden");
   dashboard.classList.remove("hidden");
@@ -905,9 +925,9 @@ serverForm.addEventListener("submit", event => {
   navigateTo("my-servers");
 
   showEliteToast(
-  "Configuration saved locally. A real Minecraft server has not been created yet.",
-  "info"
-);
+    "Configuration saved locally. A real Minecraft server has not been created yet.",
+    "info"
+  );
 });
 
 /* --------------------------------
@@ -974,23 +994,23 @@ function renderServers() {
     remove.textContent = "DELETE";
 
     remove.addEventListener("click", async () => {
-  const confirmation = await openEliteModal({
-    title: "Delete configuration",
-    description: `Are you sure you want to delete "${server.name}"? This only deletes the saved configuration.`,
-    confirmText: "DELETE",
-    danger: true
-  });
+      const confirmation = await openEliteModal({
+        title: "Delete configuration",
+        description: `Are you sure you want to delete "${server.name}"? This only deletes the saved configuration.`,
+        confirmText: "DELETE",
+        danger: true
+      });
 
-  if (!confirmation) return;
+      if (!confirmation) return;
 
-  saveServers(
-    getServers().filter(item => item.id !== server.id)
-  );
+      saveServers(
+        getServers().filter(item => item.id !== server.id)
+      );
 
-  renderServers();
+      renderServers();
 
-  showEliteToast("Configuration deleted.", "success");
-});
+      showEliteToast("Configuration deleted.", "success");
+    });
 
     info.append(title, details, status);
     actions.append(remove);
@@ -999,10 +1019,552 @@ function renderServers() {
   });
 }
 
-/* ================================================
-   ELITEHOSTX SUPPORT CENTER
-   Ticket-based conversations. No AI assistant.
-================================================ */
+
+/* --------------------------------
+   AUTHENTICATION
+-------------------------------- */
+
+function showMessage(message, type = "error") {
+  const box = document.getElementById("authMessage");
+
+  box.textContent = message;
+  box.className = `auth-message ${type}`;
+  box.classList.remove("hidden");
+}
+
+function clearMessage() {
+  const box = document.getElementById("authMessage");
+
+  box.textContent = "";
+  box.className = "auth-message hidden";
+}
+
+function setAuthMode(mode) {
+  clearMessage();
+
+  const isRegister = mode === "register";
+
+  document.getElementById("loginForm").classList.toggle("hidden", isRegister);
+  document.getElementById("registerForm").classList.toggle("hidden", !isRegister);
+  document.getElementById("loginTab").classList.toggle("active", !isRegister);
+  document.getElementById("registerTab").classList.toggle("active", isRegister);
+}
+
+function showLogin() {
+  currentUser = null;
+
+  const ownerLink = document.getElementById("ownerManagementLink");
+
+  ownerLink?.classList.add("hidden");
+
+  dashboard.classList.add("hidden");
+  authScreen.classList.remove("hidden");
+}
+
+function showDashboard(user) {
+  currentUser = user;
+
+  initializeOwnerManagement();
+
+  authScreen.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+
+  const displayName = user.name || user.email || "User";
+
+  document.getElementById("profileAvatar").textContent =
+    displayName.charAt(0).toUpperCase();
+
+  document.getElementById("profileAvatar").title = displayName;
+  document.getElementById("accountName").textContent = displayName;
+
+  document.getElementById("settingsCurrentName").textContent =
+    user.name || "Not set";
+
+  document.getElementById("settingsEmail").textContent =
+    user.email || "Not available";
+
+  renderPlans();
+  renderServers();
+  navigateTo("dashboard");
+}
+
+/* --------------------------------
+   ACCOUNT SERVER STORAGE
+-------------------------------- */
+
+function getStorageKey() {
+  return currentUser
+    ? `elitehostx_servers_${currentUser.id}`
+    : null;
+}
+
+function getServers() {
+  const key = getStorageKey();
+
+  if (!key) return [];
+
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch (error) {
+    console.error("Error reading servers:", error);
+    return [];
+  }
+}
+
+function saveServers(servers) {
+  const key = getStorageKey();
+
+  if (key) {
+    localStorage.setItem(key, JSON.stringify(servers));
+  }
+}
+
+/* --------------------------------
+   SIDEBAR AND PAGE BUTTONS
+-------------------------------- */
+
+document.querySelectorAll(".nav-link").forEach(link => {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    navigateTo(link.dataset.section);
+  });
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => {
+    navigateTo(button.dataset.go);
+  });
+});
+
+document.getElementById("heroCreate").addEventListener("click", () => {
+  navigateTo("create-server");
+});
+
+document.getElementById("loginTab").addEventListener("click", () => {
+  setAuthMode("login");
+});
+
+document.getElementById("registerTab").addEventListener("click", () => {
+  setAuthMode("register");
+});
+
+/* --------------------------------
+   LOGIN
+-------------------------------- */
+
+document.getElementById("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage();
+
+  const button = document.getElementById("loginSubmit");
+
+  button.disabled = true;
+  button.textContent = "SIGNING IN...";
+
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        email: document.getElementById("loginEmail").value,
+        password: document.getElementById("loginPassword").value
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to sign in.");
+    }
+
+    showDashboard(data.user);
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "SIGN IN";
+  }
+});
+
+/* --------------------------------
+   REGISTER
+-------------------------------- */
+
+document.getElementById("registerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage();
+
+  const password = document.getElementById("registerPassword").value;
+  const confirmation = document.getElementById("registerPasswordConfirm").value;
+
+  if (password !== confirmation) {
+    showMessage("The passwords do not match.");
+    return;
+  }
+
+  const button = document.getElementById("registerSubmit");
+
+  button.disabled = true;
+  button.textContent = "CREATING ACCOUNT...";
+
+  try {
+    const response = await fetch("/api/register", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        name: document.getElementById("registerName").value,
+        email: document.getElementById("registerEmail").value,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to create account.");
+    }
+
+    showDashboard(data.user);
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "CREATE ACCOUNT";
+  }
+});
+
+/* --------------------------------
+   LOGOUT
+-------------------------------- */
+
+async function logout() {
+  try {
+    const response = await fetch("/api/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      throw new Error("Unable to sign out.");
+    }
+
+    showLogin();
+    setAuthMode("login");
+  } catch (error) {
+    console.error("Logout error:", error);
+    showEliteToast(error.message || "Unable to sign out.", "error");
+  }
+}
+
+document.getElementById("logoutButton").addEventListener("click", logout);
+document.getElementById("settingsLogout").addEventListener("click", logout);
+
+/* --------------------------------
+   ACCOUNT SETTINGS - INLINE EDITING
+-------------------------------- */
+
+// Abrir edición del nombre
+document.getElementById("changeNameButton").addEventListener("click", () => {
+  if (!currentUser) return;
+
+  const form = document.getElementById("editNameForm");
+  const input = document.getElementById("editNameInput");
+  const button = document.getElementById("changeNameButton");
+
+  input.value = currentUser.name || "";
+  form.classList.remove("hidden");
+  button.classList.add("hidden");
+  input.focus();
+});
+
+// Cancelar edición del nombre
+document.getElementById("cancelNameEdit").addEventListener("click", () => {
+  document.getElementById("editNameForm").classList.add("hidden");
+  document.getElementById("changeNameButton").classList.remove("hidden");
+});
+
+// Guardar nombre
+document.getElementById("editNameForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const form = event.currentTarget;
+  const input = document.getElementById("editNameInput");
+  const button = form.querySelector('[type="submit"]');
+  const cleanName = input.value.trim();
+
+  if (cleanName.length < 2 || cleanName.length > 60) {
+    showEliteToast("Your name must contain between 2 and 60 characters.", "error");
+    input.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "SAVING...";
+
+  try {
+    const updatedUser = await profileRequest("/api/profile/name", {
+      name: cleanName
+    });
+
+    currentUser = { ...currentUser, ...updatedUser };
+    refreshProfileDisplay();
+
+    form.reset();
+    form.classList.add("hidden");
+    document.getElementById("changeNameButton").classList.remove("hidden");
+
+    showEliteToast("Your display name has been updated.");
+  } catch (error) {
+    showEliteToast(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "SAVE";
+  }
+});
+
+// Abrir edición del correo
+document.getElementById("changeEmailButton").addEventListener("click", () => {
+  if (!currentUser) return;
+
+  if (currentUser.provider && currentUser.provider !== "local") {
+    showEliteToast(
+      "Email changes are unavailable for accounts connected through Google or Discord.",
+      "info"
+    );
+    return;
+  }
+
+  const form = document.getElementById("editEmailForm");
+  const input = document.getElementById("editEmailInput");
+  const password = document.getElementById("editEmailPassword");
+  const button = document.getElementById("changeEmailButton");
+
+  input.value = "";
+  password.value = "";
+
+  form.classList.remove("hidden");
+  button.classList.add("hidden");
+  input.focus();
+});
+
+// Cancelar edición del correo
+document.getElementById("cancelEmailEdit").addEventListener("click", () => {
+  const form = document.getElementById("editEmailForm");
+
+  form.reset();
+  form.classList.add("hidden");
+
+  document.getElementById("changeEmailButton").classList.remove("hidden");
+});
+
+// Guardar correo
+document.getElementById("editEmailForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const form = event.currentTarget;
+  const emailInput = document.getElementById("editEmailInput");
+  const passwordInput = document.getElementById("editEmailPassword");
+  const button = form.querySelector('[type="submit"]');
+
+  const email = emailInput.value.trim();
+  const currentPassword = passwordInput.value;
+
+  if (!email || !currentPassword) {
+    showEliteToast("Complete both fields.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "SAVING...";
+
+  try {
+    const updatedUser = await profileRequest("/api/profile/email", {
+      email,
+      currentPassword
+    });
+
+    currentUser = { ...currentUser, ...updatedUser };
+    refreshProfileDisplay();
+
+    form.reset();
+    form.classList.add("hidden");
+    document.getElementById("changeEmailButton").classList.remove("hidden");
+
+    showEliteToast("Your email address has been updated.");
+  } catch (error) {
+    showEliteToast(error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "SAVE";
+  }
+});
+
+/* --------------------------------
+   CREATE SERVER CONFIGURATION
+-------------------------------- */
+
+serverForm.addEventListener("submit", event => {
+  event.preventDefault();
+
+  if (!currentUser) {
+    showLogin();
+    return;
+  }
+
+  const name = document.getElementById("serverName").value.trim();
+  const software = document.getElementById("serverSoftware").value;
+  const version = document.getElementById("serverVersion").value;
+
+  const selectedPlanId =
+    document.querySelector('input[name="hostingPlan"]:checked')?.value;
+
+  const selectedPlan = HOSTING_PLANS.find(
+    plan => plan.id === selectedPlanId
+  );
+
+  if (!name || !selectedPlan) {
+    showEliteToast("Choose a plan and enter a server name.", "error");
+    return;
+  }
+
+  const servers = getServers();
+
+  servers.push({
+    id: crypto.randomUUID(),
+    name,
+    software,
+    version,
+    planId: selectedPlan.id,
+    planName: selectedPlan.name,
+    ram: selectedPlan.ram,
+    cpu: selectedPlan.cpu,
+    disk: selectedPlan.disk,
+    createdAt: new Date().toISOString()
+  });
+
+  saveServers(servers);
+
+  serverForm.reset();
+
+  renderServers();
+  navigateTo("my-servers");
+
+  showEliteToast(
+    "Configuration saved locally. A real Minecraft server has not been created yet.",
+    "info"
+  );
+});
+
+/* --------------------------------
+   RENDER MY SERVERS
+-------------------------------- */
+
+function renderServers() {
+  if (!currentUser || !serverContainer) return;
+
+  const servers = getServers();
+
+  document.getElementById("totalServers").textContent = servers.length;
+  document.getElementById("activeServers").textContent = "0";
+
+  const totalRam = servers.reduce(
+    (sum, server) => sum + Number(server.ram || 0),
+    0
+  );
+
+  document.getElementById("totalRam").textContent = `${totalRam} GB`;
+
+  serverContainer.innerHTML = "";
+
+  if (servers.length === 0) {
+    serverContainer.innerHTML = `
+      <div class="empty-icon">▣</div>
+      <h2>No servers yet</h2>
+      <p>You haven't created any Minecraft servers. Start by creating your first one.</p>
+      <button type="button" class="primary-button" data-go="create-server">
+        CREATE MY FIRST SERVER
+      </button>
+    `;
+
+    serverContainer.querySelector("[data-go]").addEventListener("click", () => {
+      navigateTo("create-server");
+    });
+
+    return;
+  }
+
+  servers.forEach(server => {
+    const card = document.createElement("article");
+    card.className = "server-card";
+
+    const info = document.createElement("div");
+
+    const title = document.createElement("strong");
+    title.textContent = server.name;
+
+    const details = document.createElement("p");
+    details.textContent =
+      `${server.software} · Minecraft ${server.version} · ${server.planName} · ${server.ram} GB RAM · ${server.cpu} CPU · ${server.disk} GB SSD`;
+
+    const status = document.createElement("span");
+    status.className = "server-status";
+    status.textContent = "● CONFIGURATION SAVED";
+
+    const actions = document.createElement("div");
+    actions.className = "server-actions";
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "danger-button";
+    remove.textContent = "DELETE";
+
+    remove.addEventListener("click", async () => {
+      const confirmation = await openEliteModal({
+        title: "Delete configuration",
+        description: `Are you sure you want to delete "${server.name}"? This only deletes the saved configuration.`,
+        confirmText: "DELETE",
+        danger: true
+      });
+
+      if (!confirmation) return;
+
+      saveServers(
+        getServers().filter(item => item.id !== server.id)
+      );
+
+      renderServers();
+
+      showEliteToast("Configuration deleted.", "success");
+    });
+
+    info.append(title, details, status);
+    actions.append(remove);
+    card.append(info, actions);
+    serverContainer.append(card);
+  });
+}
+
+
+// ================================================
+// ELITEHOSTX SUPPORT CENTER
+// Ticket-based conversations. No AI assistant.
+// ================================================
 
 let supportInitialized = false;
 let supportAdmin = false;
@@ -1123,7 +1685,6 @@ function bindSupportEvents() {
 
   const newTicketButton = document.getElementById("openNewTicket");
   const closeTicketButton = document.getElementById("closeNewTicket");
-  const newTicketForm = document.getElementById("newTicketForm");
 
   newTicketButton?.addEventListener("click", openNewTicketForm);
   closeTicketButton?.addEventListener("click", closeNewTicketForm);
@@ -1146,7 +1707,6 @@ async function loadEliteSupport() {
   clearSupportNotice();
 
   try {
-    // This endpoint is retained only to determine whether the user is an admin.
     const data = await supportRequest("/status");
 
     supportAdmin = data.admin === true;
@@ -1160,6 +1720,7 @@ async function loadEliteSupport() {
     await loadMyTickets();
   } catch (error) {
     console.error("Support initialization error:", error);
+
     showSupportNotice(
       error.message || "Unable to connect to the support center.",
       "error"
@@ -1222,6 +1783,7 @@ function openNewTicketForm() {
   if (!panel) return;
 
   panel.classList.remove("hidden");
+
   panel.scrollIntoView({
     behavior: "smooth",
     block: "nearest"
@@ -1323,7 +1885,6 @@ async function createSupportTicket(event) {
       `Ticket #${ticket.id} created successfully. You can now chat with our support team.`,
       "success"
     );
-
   } catch (error) {
     console.error("[SUPPORT] Ticket creation error:", error);
 
@@ -1331,7 +1892,6 @@ async function createSupportTicket(event) {
       error.message || "Unable to create your ticket.",
       "error"
     );
-
   } finally {
     if (button) {
       button.disabled = false;
@@ -1352,7 +1912,9 @@ async function loadMyTickets() {
 
   if (!list || !detail) return;
 
-  list.innerHTML = `<p class="support-loading">Loading conversations...</p>`;
+  list.innerHTML = `
+    <p class="support-loading">Loading conversations...</p>
+  `;
 
   try {
     const data = await supportRequest("/tickets");
@@ -1398,34 +1960,17 @@ async function loadMyTickets() {
     list.innerHTML = tickets.map(ticket => `
       <button
         type="button"
-        class="support-ticket-item ${String(ticket.id) === String(currentUserTicketId) ? "active" : ""}"
+        class="support-ticket-item ${
+          String(ticket.id) === String(currentUserTicketId) ? "active" : ""
+        }"
         data-ticket-id="${escapeSupportHTML(ticket.id)}"
       >
         <span class="ticket-item-top">
           <strong>${escapeSupportHTML(ticket.subject)}</strong>
-          <div class="ticket-detail-actions">
-  <div class="ticket-detail-actions">
-  <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
-    ${escapeSupportHTML(getStatusName(ticket.status))}
-  </span>
 
-  <button
-    type="button"
-    id="deleteAdminTicket"
-    class="danger-button"
-  >
-    DELETE TICKET
-  </button>
-</div>
-
-  <button
-    type="button"
-    id="deleteUserTicket"
-    class="danger-button"
-  >
-    DELETE TICKET
-  </button>
-</div>
+          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+            ${escapeSupportHTML(getStatusName(ticket.status))}
+          </span>
         </span>
 
         <span class="support-ticket-category">
@@ -1452,11 +1997,21 @@ async function loadMyTickets() {
     });
 
     await loadUserTicketDetail();
+
   } catch (error) {
     console.error("Ticket loading error:", error);
 
     list.innerHTML = `
-      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+      <p class="support-error">
+        ${escapeSupportHTML(error.message)}
+      </p>
+    `;
+
+    detail.innerHTML = `
+      <div class="ticket-empty">
+        <h3>Unable to load conversations</h3>
+        <p>${escapeSupportHTML(error.message)}</p>
+      </div>
     `;
   }
 }
@@ -1493,7 +2048,11 @@ async function deleteUserSupportTicket(ticketId) {
 
   } catch (error) {
     console.error("[SUPPORT] Ticket deletion error:", error);
-    showEliteToast(error.message || "Unable to delete ticket.", "error");
+
+    showEliteToast(
+      error.message || "Unable to delete ticket.",
+      "error"
+    );
   }
 }
 
@@ -1506,7 +2065,11 @@ async function loadUserTicketDetail() {
 
   const detail = document.getElementById("myTicketDetail");
 
-  detail.innerHTML = `<p class="support-loading">Loading conversation...</p>`;
+  if (!detail) return;
+
+  detail.innerHTML = `
+    <p class="support-loading">Loading conversation...</p>
+  `;
 
   try {
     const data = await supportRequest(
@@ -1535,26 +2098,32 @@ async function loadUserTicketDetail() {
           </p>
         </div>
 
-        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
-          ${escapeSupportHTML(getStatusName(ticket.status))}
-        </span>
-      </div>
+        <div class="ticket-detail-actions">
+          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+            ${escapeSupportHTML(getStatusName(ticket.status))}
+          </span>
 
-      <div class="ticket-chat-info">
-        <span>✦</span>
-        <div>
-          <strong>EliteHostX Support</strong>
-          <small>Private ticket conversation</small>
+          <button
+            type="button"
+            id="deleteUserTicket"
+            class="danger-button"
+          >
+            DELETE TICKET
+          </button>
         </div>
       </div>
 
-      <div class="ticket-message-list" id="userTicketMessages" aria-live="polite"></div>
+      <div
+        class="ticket-message-list"
+        id="userTicketMessages"
+        aria-live="polite"
+      ></div>
 
       ${
         ticket.status === "closed"
           ? `
             <div class="ticket-closed-note">
-              This conversation is closed. Create a new ticket if you need more assistance.
+              This ticket is closed. You cannot send another response.
             </div>
           `
           : `
@@ -1579,7 +2148,9 @@ async function loadUserTicketDetail() {
 
     if (!messages.length) {
       messageList.innerHTML = `
-        <p class="support-loading">No messages in this conversation yet.</p>
+        <p class="support-loading">
+          No messages in this conversation yet.
+        </p>
       `;
     } else {
       messages.forEach(message => {
@@ -1589,21 +2160,24 @@ async function loadUserTicketDetail() {
 
     messageList.scrollTop = messageList.scrollHeight;
 
-document.getElementById("deleteUserTicket")
-  ?.addEventListener("click", () => {
-    deleteUserSupportTicket(ticket.id);
-  });
+    document.getElementById("deleteUserTicket")
+      ?.addEventListener("click", () => {
+        deleteUserSupportTicket(ticket.id);
+      });
 
     const form = document.getElementById("userTicketReplyForm");
 
     if (form) {
       form.addEventListener("submit", sendUserTicketReply);
     }
+
   } catch (error) {
     console.error("Ticket detail error:", error);
 
     detail.innerHTML = `
-      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+      <p class="support-error">
+        ${escapeSupportHTML(error.message)}
+      </p>
     `;
   }
 }
@@ -1628,9 +2202,11 @@ function appendTicketMessage(container, message, viewer = "user") {
 
   heading.textContent = isAdmin
     ? "EliteHostX Support"
-    : (viewer === "admin"
-      ? (message.sender_name || "Customer")
-      : "You");
+    : (
+      viewer === "admin"
+        ? (message.sender_name || "Customer")
+        : "You"
+    );
 
   const content = document.createElement("p");
   content.textContent = message.content;
@@ -1651,7 +2227,7 @@ async function sendUserTicketReply(event) {
 
   const input = document.getElementById("userTicketReply");
   const button = event.submitter;
-  const content = input.value.trim();
+  const content = input?.value.trim();
 
   if (!content || !currentUserTicketId) return;
 
@@ -1673,6 +2249,7 @@ async function sendUserTicketReply(event) {
     await loadMyTickets();
 
     showSupportNotice("Your message has been sent.", "success");
+
   } catch (error) {
     showSupportNotice(error.message, "error");
 
@@ -1683,19 +2260,38 @@ async function sendUserTicketReply(event) {
   }
 }
 
-/* ================================================
-   ADMIN SUPPORT CENTER
-================================================ */
+/* --------------------------------
+   GLOBAL SUPPORT FORM LISTENER
+-------------------------------- */
+
+document.addEventListener("submit", event => {
+  if (event.target?.id !== "newTicketForm") {
+    return;
+  }
+
+  createSupportTicket(event);
+});
+
+
+// ================================================
+// ELITEHOSTX ADMIN SUPPORT CENTER
+// ================================================
+
+/* --------------------------------
+   ADMIN TICKET LIST
+-------------------------------- */
 
 async function loadAdminTickets() {
-  if (!supportAdmin) return;
+  if (!currentUser || !supportAdmin) return;
 
   const list = document.getElementById("adminTicketList");
   const detail = document.getElementById("adminTicketDetail");
 
   if (!list || !detail) return;
 
-  list.innerHTML = `<p class="support-loading">Loading support queue...</p>`;
+  list.innerHTML = `
+    <p class="support-loading">Loading all support tickets...</p>
+  `;
 
   try {
     const data = await supportRequest("/admin/tickets");
@@ -1706,17 +2302,17 @@ async function loadAdminTickets() {
 
       list.innerHTML = `
         <div class="support-list-empty">
-          <span>♛</span>
-          <p>No support tickets.</p>
-          <small>New customer requests will appear here.</small>
+          <span>◈</span>
+          <p>No support tickets found.</p>
+          <small>New customer conversations will appear here.</small>
         </div>
       `;
 
       detail.innerHTML = `
         <div class="ticket-empty">
-          <div class="ticket-empty-icon">♛</div>
-          <h3>Support queue is clear</h3>
-          <p>There are no customer conversations to review right now.</p>
+          <div class="ticket-empty-icon">◈</div>
+          <h3>No conversations selected</h3>
+          <p>Select a ticket from the list to view its conversation.</p>
         </div>
       `;
 
@@ -1735,23 +2331,27 @@ async function loadAdminTickets() {
     list.innerHTML = tickets.map(ticket => `
       <button
         type="button"
-        class="support-ticket-item ${String(ticket.id) === String(currentAdminTicketId) ? "active" : ""}"
+        class="support-ticket-item ${
+          String(ticket.id) === String(currentAdminTicketId) ? "active" : ""
+        }"
         data-admin-ticket-id="${escapeSupportHTML(ticket.id)}"
       >
         <span class="ticket-item-top">
           <strong>${escapeSupportHTML(ticket.subject)}</strong>
+
           <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
             ${escapeSupportHTML(getStatusName(ticket.status))}
           </span>
         </span>
 
         <span class="support-ticket-category">
-          ${escapeSupportHTML(getCategoryName(ticket.category))}
+          ${escapeSupportHTML(ticket.name || ticket.email || "Customer")}
         </span>
 
         <small>
-          ${escapeSupportHTML(ticket.email || ticket.user_email || "Customer")}
-          · #${escapeSupportHTML(ticket.id)}
+          #${escapeSupportHTML(ticket.id)}
+          · ${escapeSupportHTML(getPriorityName(ticket.priority))}
+          · ${escapeSupportHTML(formatSupportDate(ticket.updated_at || ticket.created_at))}
         </small>
       </button>
     `).join("");
@@ -1769,25 +2369,39 @@ async function loadAdminTickets() {
     });
 
     await loadAdminTicketDetail();
+
   } catch (error) {
-    console.error("Admin ticket loading error:", error);
+    console.error("[SUPPORT ADMIN] Ticket list error:", error);
 
     list.innerHTML = `
-      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+      <p class="support-error">
+        ${escapeSupportHTML(error.message)}
+      </p>
+    `;
+
+    detail.innerHTML = `
+      <div class="ticket-empty">
+        <h3>Unable to load tickets</h3>
+        <p>${escapeSupportHTML(error.message)}</p>
+      </div>
     `;
   }
 }
 
 /* --------------------------------
-   ADMIN TICKET CHAT
+   ADMIN TICKET DETAIL
 -------------------------------- */
 
 async function loadAdminTicketDetail() {
-  if (!supportAdmin || !currentAdminTicketId) return;
+  if (!currentAdminTicketId || !supportAdmin) return;
 
   const detail = document.getElementById("adminTicketDetail");
 
-  detail.innerHTML = `<p class="support-loading">Loading conversation...</p>`;
+  if (!detail) return;
+
+  detail.innerHTML = `
+    <p class="support-loading">Loading ticket conversation...</p>
+  `;
 
   try {
     const data = await supportRequest(
@@ -1805,30 +2419,55 @@ async function loadAdminTicketDetail() {
       <div class="ticket-detail-heading">
         <div>
           <span class="support-kicker">
-            CUSTOMER REQUEST #${escapeSupportHTML(ticket.id)}
+            ADMIN VIEW · TICKET #${escapeSupportHTML(ticket.id)}
           </span>
 
           <h3>${escapeSupportHTML(ticket.subject)}</h3>
 
           <p>
-            ${escapeSupportHTML(ticket.email || ticket.user_email || "Customer")}
-            · ${escapeSupportHTML(getCategoryName(ticket.category))}
+            Customer:
+            ${escapeSupportHTML(ticket.name || ticket.email || "Unknown")}
+          </p>
+
+          <p>
+            Category:
+            ${escapeSupportHTML(getCategoryName(ticket.category))}
+            · Created:
+            ${escapeSupportHTML(formatSupportDate(ticket.created_at))}
           </p>
         </div>
 
-        <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
-          ${escapeSupportHTML(getStatusName(ticket.status))}
-        </span>
+        <div class="ticket-detail-actions">
+          <span class="ticket-status status-${escapeSupportHTML(ticket.status)}">
+            ${escapeSupportHTML(getStatusName(ticket.status))}
+          </span>
+
+          <button
+            type="button"
+            id="deleteAdminTicket"
+            class="danger-button"
+          >
+            DELETE TICKET
+          </button>
+        </div>
       </div>
 
       <div class="admin-ticket-controls">
         <label>
-          Status
+          Ticket status
 
           <select id="adminTicketStatus">
-            <option value="open" ${ticket.status === "open" ? "selected" : ""}>Open</option>
-            <option value="answered" ${ticket.status === "answered" ? "selected" : ""}>Answered</option>
-            <option value="closed" ${ticket.status === "closed" ? "selected" : ""}>Closed</option>
+            <option value="open" ${ticket.status === "open" ? "selected" : ""}>
+              Open
+            </option>
+
+            <option value="answered" ${ticket.status === "answered" ? "selected" : ""}>
+              Answered
+            </option>
+
+            <option value="closed" ${ticket.status === "closed" ? "selected" : ""}>
+              Closed
+            </option>
           </select>
         </label>
 
@@ -1836,30 +2475,34 @@ async function loadAdminTicketDetail() {
           Priority
 
           <select id="adminTicketPriority">
-            <option value="low" ${ticket.priority === "low" ? "selected" : ""}>Low</option>
-            <option value="normal" ${ticket.priority === "normal" ? "selected" : ""}>Normal</option>
-            <option value="high" ${ticket.priority === "high" ? "selected" : ""}>High</option>
+            <option value="low" ${ticket.priority === "low" ? "selected" : ""}>
+              Low
+            </option>
+
+            <option value="normal" ${ticket.priority === "normal" ? "selected" : ""}>
+              Normal
+            </option>
+
+            <option value="high" ${ticket.priority === "high" ? "selected" : ""}>
+              High
+            </option>
           </select>
         </label>
 
         <button
           type="button"
-          id="saveAdminTicket"
+          id="saveAdminTicketChanges"
           class="secondary-button"
         >
           SAVE CHANGES
         </button>
       </div>
 
-      <div class="ticket-chat-info">
-        <span>♛</span>
-        <div>
-          <strong>Customer conversation</strong>
-          <small>Reply as EliteHostX Support</small>
-        </div>
-      </div>
-
-      <div class="ticket-message-list" id="adminTicketMessages" aria-live="polite"></div>
+      <div
+        class="ticket-message-list"
+        id="adminTicketMessages"
+        aria-live="polite"
+      ></div>
 
       ${
         ticket.status === "closed"
@@ -1890,7 +2533,9 @@ async function loadAdminTicketDetail() {
 
     if (!messages.length) {
       messageList.innerHTML = `
-        <p class="support-loading">No messages in this conversation yet.</p>
+        <p class="support-loading">
+          No messages in this conversation yet.
+        </p>
       `;
     } else {
       messages.forEach(message => {
@@ -1900,35 +2545,42 @@ async function loadAdminTicketDetail() {
 
     messageList.scrollTop = messageList.scrollHeight;
 
-    document.getElementById("saveAdminTicket")
-      ?.addEventListener("click", saveAdminTicketChanges);
+    document.getElementById("deleteAdminTicket")
+      ?.addEventListener("click", () => {
+        deleteAdminSupportTicket(ticket.id);
+      });
 
-      document.getElementById("deleteAdminTicket")
-  ?.addEventListener("click", () => {
-    deleteAdminSupportTicket(ticket.id);
-  });
+    document.getElementById("saveAdminTicketChanges")
+      ?.addEventListener("click", saveAdminTicketChanges);
 
     document.getElementById("adminTicketReplyForm")
       ?.addEventListener("submit", sendAdminTicketReply);
+
   } catch (error) {
-    console.error("Admin ticket detail error:", error);
+    console.error("[SUPPORT ADMIN] Ticket detail error:", error);
 
     detail.innerHTML = `
-      <p class="support-error">${escapeSupportHTML(error.message)}</p>
+      <p class="support-error">
+        ${escapeSupportHTML(error.message)}
+      </p>
     `;
   }
 }
 
 /* --------------------------------
-   DELETE ADMIN TICKET
+   ADMIN DELETE ANY TICKET
 -------------------------------- */
 
 async function deleteAdminSupportTicket(ticketId) {
-  if (!supportAdmin) return;
+  if (!supportAdmin) {
+    showEliteToast("You do not have permission to delete tickets.", "error");
+    return;
+  }
 
   const confirmation = await openEliteModal({
     title: "Delete customer ticket",
-    description: `Are you sure you want to permanently delete customer ticket #${ticketId}? All messages will also be deleted.`,
+    description:
+      `Are you sure you want to permanently delete ticket #${ticketId}? This also deletes its entire message history.`,
     confirmText: "DELETE TICKET",
     danger: true
   });
@@ -1952,24 +2604,45 @@ async function deleteAdminSupportTicket(ticketId) {
     await loadAdminTickets();
 
   } catch (error) {
-    console.error("[SUPPORT] Admin ticket deletion error:", error);
-    showEliteToast(error.message || "Unable to delete ticket.", "error");
+    console.error("[SUPPORT ADMIN] Ticket deletion error:", error);
+
+    showEliteToast(
+      error.message || "Unable to delete this ticket.",
+      "error"
+    );
   }
 }
 
 /* --------------------------------
-   ADMIN UPDATE TICKET
+   ADMIN UPDATE STATUS AND PRIORITY
 -------------------------------- */
 
 async function saveAdminTicketChanges() {
   if (!supportAdmin || !currentAdminTicketId) return;
 
-  const button = document.getElementById("saveAdminTicket");
-  const status = document.getElementById("adminTicketStatus").value;
-  const priority = document.getElementById("adminTicketPriority").value;
+  const statusInput = document.getElementById("adminTicketStatus");
+  const priorityInput = document.getElementById("adminTicketPriority");
+  const button = document.getElementById("saveAdminTicketChanges");
 
-  button.disabled = true;
-  button.textContent = "SAVING...";
+  if (!statusInput || !priorityInput) return;
+
+  const status = statusInput.value;
+  const priority = priorityInput.value;
+
+  if (!["open", "answered", "closed"].includes(status)) {
+    showEliteToast("Invalid ticket status.", "error");
+    return;
+  }
+
+  if (!["low", "normal", "high"].includes(priority)) {
+    showEliteToast("Invalid ticket priority.", "error");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SAVING...";
+  }
 
   try {
     await supportRequest(
@@ -1983,14 +2656,22 @@ async function saveAdminTicketChanges() {
       }
     );
 
-    showSupportNotice("Ticket updated successfully.", "success");
+    showEliteToast("Ticket updated successfully.", "success");
 
     await loadAdminTickets();
+
   } catch (error) {
-    showSupportNotice(error.message, "error");
-  } finally {
-    button.disabled = false;
-    button.textContent = "SAVE CHANGES";
+    console.error("[SUPPORT ADMIN] Ticket update error:", error);
+
+    showEliteToast(
+      error.message || "Unable to update ticket.",
+      "error"
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "SAVE CHANGES";
+    }
   }
 }
 
@@ -2005,9 +2686,14 @@ async function sendAdminTicketReply(event) {
 
   const input = document.getElementById("adminTicketReply");
   const button = event.submitter;
-  const content = input.value.trim();
+  const content = input?.value.trim();
 
   if (!content) return;
+
+  if (content.length > 4000) {
+    showEliteToast("Your response is too long.", "error");
+    return;
+  }
 
   if (button) {
     button.disabled = true;
@@ -2026,9 +2712,15 @@ async function sendAdminTicketReply(event) {
     await loadAdminTicketDetail();
     await loadAdminTickets();
 
-    showSupportNotice("Your response has been sent.", "success");
+    showEliteToast("Response sent to the customer.", "success");
+
   } catch (error) {
-    showSupportNotice(error.message, "error");
+    console.error("[SUPPORT ADMIN] Reply error:", error);
+
+    showEliteToast(
+      error.message || "Unable to send response.",
+      "error"
+    );
 
     if (button) {
       button.disabled = false;
@@ -2037,112 +2729,307 @@ async function sendAdminTicketReply(event) {
   }
 }
 
+
+// ================================================
+// ELITEHOSTX OWNER USER MANAGEMENT
+// Only OWNER can manage account roles.
+// ================================================
+
 /* --------------------------------
-   SESSION CHECK
+   OWNER API REQUEST
 -------------------------------- */
 
-async function checkSession() {
+async function ownerRequest(path, options = {}) {
+  if (currentUser?.role !== "OWNER") {
+    throw new Error("Only the account owner can manage user roles.");
+  }
+
+  const response = await fetch(`/api/owner${path}`, {
+    credentials: "same-origin",
+    cache: "no-store",
+    ...options,
+    headers: {
+      "Accept": "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {})
+    }
+  });
+
+  let data;
+
   try {
-    const response = await fetch("/api/me", {
-      credentials: "same-origin",
-      headers: {
-        "Accept": "application/json"
-      },
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      showLogin();
-      return;
-    }
-
-    const data = await response.json();
-
-    if (data.authenticated && data.user) {
-      showDashboard(data.user);
-    } else {
-      showLogin();
-    }
-  } catch (error) {
-    console.error("Session check error:", error);
-    showLogin();
+    data = await response.json();
+  } catch {
+    data = {};
   }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || `User management request failed (${response.status}).`
+    );
+  }
+
+  return data;
 }
 
 /* --------------------------------
-   AUTH URL MESSAGES
+   OWNER USER LIST
 -------------------------------- */
 
-function checkAuthMessages() {
-  const params = new URLSearchParams(window.location.search);
-  const status = params.get("auth");
-
-  if (status === "failed") {
-    showMessage("Unable to sign in with that provider.");
-  }
-
-  if (status === "unavailable") {
-    showMessage("That sign-in method is not configured yet.");
-  }
-
-  if (status) {
-    history.replaceState({}, document.title, location.pathname);
-  }
-}
-
-/* --------------------------------
-   API STATUS
--------------------------------- */
-
-async function loadStatus() {
-  try {
-    const response = await fetch("/api/status", {
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error(`API ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    console.log("EliteHostX:", data);
-
-    if (data.registration !== "enabled") {
-      console.warn("Account registration is not enabled.");
-    }
-  } catch (error) {
-    console.error("Connection error:", error);
-  }
-}
-
-/* --------------------------------
-   GLOBAL SUPPORT FORM LISTENER
-   Garantiza que el formulario funcione
-   aunque falle la inicialización visual.
--------------------------------- */
-
-document.addEventListener("submit", event => {
-  if (event.target?.id !== "newTicketForm") {
+async function loadOwnerUsers() {
+  if (currentUser?.role !== "OWNER") {
+    showEliteToast(
+      "Only the account owner can manage user roles.",
+      "error"
+    );
     return;
   }
 
-  createSupportTicket(event);
-});
+  const container = document.getElementById("ownerUsersList");
+  const search = document.getElementById("ownerUserSearch");
+
+  if (!container) return;
+
+  container.innerHTML = `
+    <p class="support-loading">Loading registered users...</p>
+  `;
+
+  const query = search?.value.trim() || "";
+
+  try {
+    const data = await ownerRequest(
+      `/users?q=${encodeURIComponent(query)}`
+    );
+
+    const users = data.users || [];
+
+    if (!users.length) {
+      container.innerHTML = `
+        <div class="support-list-empty">
+          <span>◈</span>
+          <p>No users found.</p>
+          <small>Try another name or email address.</small>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="owner-users-table-wrapper">
+        <table class="owner-users-table">
+          <thead>
+            <tr>
+              <th>USER</th>
+              <th>EMAIL</th>
+              <th>CURRENT ROLE</th>
+              <th>CHANGE ROLE</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${users.map(user => {
+              const userId = String(user.id);
+              const userRole = String(user.role || "USER").toUpperCase();
+              const userName = user.name || user.display_name || "Unnamed user";
+              const isCurrentUser =
+                String(currentUser.id) === userId;
+
+              const validRole = ["USER", "ADMIN", "OWNER"].includes(userRole)
+                ? userRole
+                : "USER";
+
+              return `
+                <tr data-owner-user-id="${escapeSupportHTML(userId)}">
+                  <td>
+                    <strong>${escapeSupportHTML(userName)}</strong>
+                    ${
+                      isCurrentUser
+                        ? `<small class="owner-current-account">Your account</small>`
+                        : ""
+                    }
+                  </td>
+
+                  <td>${escapeSupportHTML(user.email || "No email")}</td>
+
+                  <td>
+                    <span class="owner-role-badge role-${validRole.toLowerCase()}">
+                      ${validRole}
+                    </span>
+                  </td>
+
+                  <td>
+                    ${
+                      isCurrentUser
+                        ? `
+                          <span class="owner-protected-label">
+                            Current owner
+                          </span>
+                        `
+                        : `
+                          <div class="owner-role-controls">
+                            <select
+                              class="owner-role-select"
+                              data-role-user-id="${escapeSupportHTML(userId)}"
+                              aria-label="New role for ${escapeSupportHTML(userName)}"
+                            >
+                              <option value="USER" ${validRole === "USER" ? "selected" : ""}>
+                                USER
+                              </option>
+
+                              <option value="ADMIN" ${validRole === "ADMIN" ? "selected" : ""}>
+                                ADMIN
+                              </option>
+
+                              <option value="OWNER" ${validRole === "OWNER" ? "selected" : ""}>
+                                OWNER
+                              </option>
+                            </select>
+
+                            <button
+                              type="button"
+                              class="secondary-button owner-save-role"
+                              data-save-role-user-id="${escapeSupportHTML(userId)}"
+                            >
+                              SAVE
+                            </button>
+                          </div>
+                        `
+                    }
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.querySelectorAll("[data-save-role-user-id]")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          const userId = button.dataset.saveRoleUserId;
+
+          const select = container.querySelector(
+            `[data-role-user-id="${CSS.escape(userId)}"]`
+          );
+
+          if (!select) return;
+
+          updateOwnerUserRole(userId, select.value, button);
+        });
+      });
+
+  } catch (error) {
+    console.error("[OWNER] User loading error:", error);
+
+    container.innerHTML = `
+      <div class="support-error">
+        ${escapeSupportHTML(error.message)}
+      </div>
+    `;
+  }
+}
 
 /* --------------------------------
-   INITIALIZE APPLICATION
+   CHANGE USER ROLE
 -------------------------------- */
 
-// Hide all pages before checking the user session.
-document.querySelectorAll("#appDashboard .page-section").forEach(page => {
-  page.classList.remove("active");
-  page.hidden = true;
-  page.setAttribute("aria-hidden", "true");
-});
+async function updateOwnerUserRole(userId, role, button) {
+  if (currentUser?.role !== "OWNER") {
+    showEliteToast(
+      "You are not authorized to change user roles.",
+      "error"
+    );
+    return;
+  }
 
-renderPlans();
-checkAuthMessages();
-showLogin();
-loadStatus();
-checkSession();
+  const allowedRoles = ["USER", "ADMIN", "OWNER"];
+
+  if (!allowedRoles.includes(role)) {
+    showEliteToast("Invalid account role.", "error");
+    return;
+  }
+
+  if (String(currentUser.id) === String(userId)) {
+    showEliteToast(
+      "You cannot change your own owner role from this panel.",
+      "error"
+    );
+    return;
+  }
+
+  const confirmation = await openEliteModal({
+    title: "Change account role",
+    description:
+      `Are you sure you want to assign the role ${role} to this account?`,
+    confirmText: "CONFIRM ROLE",
+    danger: role !== "USER"
+  });
+
+  if (!confirmation) return;
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SAVING...";
+  }
+
+  try {
+    await ownerRequest(
+      `/users/${encodeURIComponent(userId)}/role`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ role })
+      }
+    );
+
+    showEliteToast(
+      `Account role successfully changed to ${role}.`,
+      "success"
+    );
+
+    await loadOwnerUsers();
+
+  } catch (error) {
+    console.error("[OWNER] Role update error:", error);
+
+    showEliteToast(
+      error.message || "Unable to update account role.",
+      "error"
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "SAVE";
+    }
+  }
+}
+
+/* --------------------------------
+   OWNER MANAGEMENT INITIALIZATION
+-------------------------------- */
+
+function initializeOwnerManagement() {
+  const link = document.getElementById("ownerManagementLink");
+  const refresh = document.getElementById("refreshOwnerUsers");
+  const search = document.getElementById("ownerUserSearch");
+
+  const isOwner = currentUser?.role === "OWNER";
+
+  link?.classList.toggle("hidden", !isOwner);
+
+  if (!isOwner && window.location.hash === "#user-management") {
+    navigateTo("dashboard");
+  }
+
+  if (ownerManagementInitialized) return;
+
+  ownerManagementInitialized = true;
+
+  refresh?.addEventListener("click", () => {
+    loadOwnerUsers();
+  });
+
+  search?.addEventListener("input", () => {
+    loadOwnerUsers();
+  });
+}

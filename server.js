@@ -182,12 +182,98 @@ async function initializeDatabase() {
             display_name VARCHAR(120) NOT NULL,
             avatar_url TEXT,
             password_hash TEXT,
+            
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             UNIQUE(provider, provider_id)
         )
     `);
+    await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS role VARCHAR(10) NOT NULL DEFAULT 'USER'
+`);
+
+await pool.query(`
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'users_role_check'
+        ) THEN
+            ALTER TABLE users
+            ADD CONSTRAINT users_role_check
+            CHECK (role IN ('USER', 'ADMIN', 'OWNER'));
+        END IF;
+    END
+    $$
+`);
+
+await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_migrations (
+        name TEXT PRIMARY KEY,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+`);
+
+const adminMigration = await pool.query(
+    "SELECT 1 FROM app_migrations WHERE name = 'roles_admin_bootstrap_v1'"
+);
+
+if (!adminMigration.rows.length) {
+    const adminEmails = (process.env.ELITEAI_ADMIN_EMAILS || "")
+        .split(",")
+        .map(email => email.trim().toLowerCase())
+        .filter(Boolean);
+
+    if (adminEmails.length) {
+        await pool.query(
+            `UPDATE users
+             SET role = 'ADMIN'
+             WHERE LOWER(email) = ANY($1::text[])
+               AND role = 'USER'`,
+            [adminEmails]
+        );
+    }
+
+    await pool.query(`
+        INSERT INTO app_migrations (name)
+        VALUES ('roles_admin_bootstrap_v1')
+        ON CONFLICT DO NOTHING
+    `);
+}
+
+const ownerEmail = String(
+    process.env.ELITEHOSTX_OWNER_EMAIL || ""
+).trim().toLowerCase();
+
+if (ownerEmail) {
+    const ownerMigration = await pool.query(
+        "SELECT 1 FROM app_migrations WHERE name = 'owner_bootstrap_v1'"
+    );
+
+    if (!ownerMigration.rows.length) {
+        const ownerResult = await pool.query(
+            `UPDATE users
+             SET role = 'OWNER'
+             WHERE LOWER(email) = LOWER($1)
+             RETURNING id`,
+            [ownerEmail]
+        );
+
+        if (ownerResult.rows.length) {
+            await pool.query(`
+                INSERT INTO app_migrations (name)
+                VALUES ('owner_bootstrap_v1')
+                ON CONFLICT DO NOTHING
+            `);
+        } else {
+            console.warn(
+                "[ROLES] El correo configurado como OWNER todavía no tiene cuenta."
+            );
+        }
+    }
+}
 
     // Compatible con la tabla OAuth anterior.
     await pool.query(`
@@ -231,7 +317,8 @@ function publicUser(row) {
         name: row.display_name,
         email: row.email,
         avatar: row.avatar_url || null,
-        provider: row.provider || "local"
+        provider: row.provider || "local",
+        role: row.role || "USER"
     };
 }
 
@@ -303,7 +390,7 @@ passport.deserializeUser(async (id, done) => {
         }
 
         const result = await pool.query(
-            `SELECT id, display_name, email, avatar_url, provider
+            `SELECT id, display_name, email, avatar_url, provider, role
              FROM users
              WHERE id = $1`,
             [id]
@@ -363,23 +450,31 @@ async function saveOAuthUser(provider, profile) {
 
     const result = await pool.query(
         `INSERT INTO users
-            (provider, provider_id, email, display_name, avatar_url, last_login_at)
-         VALUES ($1, $2, $3, $4, $5, NOW())
-         ON CONFLICT (provider, provider_id)
-         DO UPDATE SET
-            email = EXCLUDED.email,
-            display_name = EXCLUDED.display_name,
-            avatar_url = EXCLUDED.avatar_url,
-            updated_at = NOW(),
-            last_login_at = NOW()
-         RETURNING id, display_name, email, avatar_url, provider`,
+    (provider, provider_id, email, display_name, avatar_url, role, last_login_at)
+ VALUES (
+    $1, $2, $3, $4, $5,
+    CASE
+        WHEN $6 <> '' AND LOWER($3) = LOWER($6) THEN 'OWNER'
+        ELSE 'USER'
+    END,
+    NOW()
+ )
+ ON CONFLICT (provider, provider_id)
+ DO UPDATE SET
+    email = EXCLUDED.email,
+    display_name = EXCLUDED.display_name,
+    avatar_url = EXCLUDED.avatar_url,
+    updated_at = NOW(),
+    last_login_at = NOW()
+ RETURNING id, display_name, email, avatar_url, provider, role`,
         [
-            provider,
-            profile.id,
-            email,
-            displayName,
-            avatarUrl
-        ]
+    provider,
+    profile.id,
+    email,
+    displayName,
+    avatarUrl,
+    String(process.env.ELITEHOSTX_OWNER_EMAIL || "").trim()
+]
     );
 
     return publicUser(result.rows[0]);
@@ -472,16 +567,25 @@ app.post(
 
             const passwordHash = await bcrypt.hash(password, 12);
 
+
             const result = await pool.query(
                 `INSERT INTO users
-                    (provider, provider_id, email, display_name, password_hash, last_login_at)
-                 VALUES ('local', $1, $1, $2, $3, NOW())
-                 ON CONFLICT DO NOTHING
-                 RETURNING id, display_name, email, avatar_url, provider`,
+                (provider, provider_id, email, display_name, password_hash, role, last_login_at)
+                VALUES (
+                    'local', $1, $1, $2, $3,
+                    CASE
+                        WHEN LOWER($1) = LOWER($4) AND $4 <> '' THEN 'OWNER'
+                        ELSE 'USER'
+                    END,
+                    NOW()
+                )
+                ON CONFLICT DO NOTHING
+                RETURNING id, display_name, email, avatar_url, provider, role`,
                 [
                     email,
                     name,
-                    passwordHash
+                    passwordHash,
+                    String(process.env.ELITEHOSTX_OWNER_EMAIL || "").trim()
                 ]
             );
 
@@ -538,7 +642,7 @@ app.post(
             }
 
             const result = await pool.query(
-                `SELECT id, display_name, email, avatar_url, provider, password_hash
+                `SELECT id, display_name, email, avatar_url, provider, password_hash, role
                  FROM users
                  WHERE LOWER(email) = $1 AND provider = 'local'
                  LIMIT 1`,
@@ -761,6 +865,221 @@ app.patch("/api/profile/email", requireDatabase, profileLimiter, async (req, res
     });
   }
 });
+
+
+// ==========================================
+// ELITEHOSTX OWNER USER MANAGEMENT API
+// ==========================================
+
+const ownerRoleLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: "Demasiadas solicitudes de gestión. Inténtalo más tarde."
+    }
+});
+
+function requireOwner(req, res, next) {
+    if (!req.isAuthenticated || !req.isAuthenticated() || !req.user?.id) {
+        return res.status(401).json({
+            error: "Debes iniciar sesión."
+        });
+    }
+
+    if (req.user.role !== "OWNER") {
+        return res.status(403).json({
+            error: "Solo el propietario puede gestionar los roles."
+        });
+    }
+
+    next();
+}
+
+// ------------------------------------------
+// LIST USERS
+// GET /api/owner/users?q=search
+// ------------------------------------------
+
+app.get(
+    "/api/owner/users",
+    requireDatabase,
+    requireOwner,
+    ownerRoleLimiter,
+    async (req, res) => {
+        try {
+            const query = String(req.query.q || "")
+                .trim()
+                .slice(0, 150);
+
+            const result = await pool.query(
+                `SELECT
+                    id,
+                    display_name,
+                    email,
+                    role,
+                    created_at
+                 FROM users
+                 WHERE
+                    $1 = ''
+                    OR display_name ILIKE '%' || $1 || '%'
+                    OR email ILIKE '%' || $1 || '%'
+                 ORDER BY
+                    CASE role
+                        WHEN 'OWNER' THEN 1
+                        WHEN 'ADMIN' THEN 2
+                        ELSE 3
+                    END,
+                    created_at DESC
+                 LIMIT 100`,
+                [query]
+            );
+
+            return res.json({
+                success: true,
+                users: result.rows.map(user => ({
+                    id: String(user.id),
+                    name: user.display_name,
+                    display_name: user.display_name,
+                    email: user.email,
+                    role: user.role || "USER",
+                    created_at: user.created_at
+                }))
+            });
+
+        } catch (error) {
+            console.error("[OWNER] User listing error:", error);
+
+            return res.status(500).json({
+                error: "No se pudieron cargar los usuarios."
+            });
+        }
+    }
+);
+
+// ------------------------------------------
+// CHANGE USER ROLE
+// PATCH /api/owner/users/:id/role
+// ------------------------------------------
+
+app.patch(
+    "/api/owner/users/:id/role",
+    requireDatabase,
+    requireOwner,
+    ownerRoleLimiter,
+    async (req, res) => {
+        const targetId = String(req.params.id || "");
+        const newRole = String(req.body?.role || "").toUpperCase();
+
+        if (!/^\d+$/.test(targetId)) {
+            return res.status(400).json({
+                error: "Identificador de usuario inválido."
+            });
+        }
+
+        if (!["USER", "ADMIN", "OWNER"].includes(newRole)) {
+            return res.status(400).json({
+                error: "El rol solicitado no es válido."
+            });
+        }
+
+        if (String(req.user.id) === targetId) {
+            return res.status(403).json({
+                error: "No puedes cambiar tu propio rol."
+            });
+        }
+
+        const client = await pool.connect();
+
+        try {
+            await client.query("BEGIN");
+
+            // Lock current owner rows to protect the last OWNER.
+            const ownersResult = await client.query(
+                `SELECT id
+                 FROM users
+                 WHERE role = 'OWNER'
+                 FOR UPDATE`
+            );
+
+            const targetResult = await client.query(
+                `SELECT id, display_name, email, role
+                 FROM users
+                 WHERE id = $1
+                 FOR UPDATE`,
+                [targetId]
+            );
+
+            if (!targetResult.rows.length) {
+                await client.query("ROLLBACK");
+
+                return res.status(404).json({
+                    error: "El usuario no existe."
+                });
+            }
+
+            const target = targetResult.rows[0];
+            const currentRole = target.role || "USER";
+
+            if (
+                currentRole === "OWNER" &&
+                newRole !== "OWNER" &&
+                ownersResult.rows.length <= 1
+            ) {
+                await client.query("ROLLBACK");
+
+                return res.status(409).json({
+                    error: "No puedes quitar el rol al último propietario de EliteHostX."
+                });
+            }
+
+            const updateResult = await client.query(
+                `UPDATE users
+                 SET role = $1,
+                     updated_at = NOW()
+                 WHERE id = $2
+                 RETURNING id, display_name, email, role`,
+                [newRole, targetId]
+            );
+
+            await client.query("COMMIT");
+
+            const updatedUser = updateResult.rows[0];
+
+            console.log(
+                `[OWNER] ${req.user.email} changed ${updatedUser.email}'s role from ${currentRole} to ${newRole}.`
+            );
+
+            return res.json({
+                success: true,
+                message: "Rol actualizado correctamente.",
+                user: {
+                    id: String(updatedUser.id),
+                    name: updatedUser.display_name,
+                    email: updatedUser.email,
+                    role: updatedUser.role
+                }
+            });
+
+        } catch (error) {
+            try {
+                await client.query("ROLLBACK");
+            } catch (rollbackError) {
+                console.error("[OWNER] Rollback error:", rollbackError);
+            }
+
+            console.error("[OWNER] Role update error:", error);
+
+            return res.status(500).json({
+                error: "No se pudo actualizar el rol del usuario."
+            });
+
+        } finally {
+            client.release();
+        }
+    }
+);
 
 // ==========================================
 // LOGOUT

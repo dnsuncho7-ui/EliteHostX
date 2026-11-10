@@ -11,19 +11,12 @@ const SUPPORT_CATEGORIES = {
     other: "Other"
 };
 
-const ADMIN_EMAILS = new Set(
-    (process.env.ELITEAI_ADMIN_EMAILS || "")
-        .split(",")
-        .map(email => email.trim().toLowerCase())
-        .filter(Boolean)
-);
-
 function isAdmin(req) {
-    const email = String(req.user?.email || "")
+    const role = String(req.user?.role || "")
         .trim()
-        .toLowerCase();
+        .toUpperCase();
 
-    return Boolean(email && ADMIN_EMAILS.has(email));
+    return role === "ADMIN" || role === "OWNER";
 }
 
 function requireLogin(req, res, next) {

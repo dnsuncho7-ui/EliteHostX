@@ -99,6 +99,9 @@
         <a href="#console" class="nav-link" data-section="console"><span>⌘</span> Console</a>
         <a href="#settings" class="nav-link" data-section="settings"><span>⚙</span> Settings</a>
         <a href="#support" class="nav-link" data-section="support"><span>✦</span> Support</a>
+        <a href="#user-management" class="nav-link hidden" id="ownerManagementLink" data-section="user-management">
+  <span>♛</span> User Management
+</a>
       </nav>
     </div>
 
@@ -621,6 +624,43 @@
       </div>
 
     </section>
+
+    <!-- OWNER USER MANAGEMENT -->
+<section
+  class="page-section"
+  id="section-user-management"
+  data-title="User Management"
+  data-description="Manage EliteHostX account roles and permissions."
+>
+  <div class="section-header">
+    <div>
+      <h2>User Management</h2>
+      <p>Manage account roles and access permissions across EliteHostX.</p>
+    </div>
+
+    <button type="button" class="secondary-button" id="refreshOwnerUsers">
+      ↻ REFRESH USERS
+    </button>
+  </div>
+
+  <div class="content-card">
+    <div class="section-heading">
+      <h2>Account permissions</h2>
+      <p>Only the account owner can change user roles.</p>
+    </div>
+
+    <input
+      type="search"
+      id="ownerUserSearch"
+      placeholder="Search users by name or email..."
+      maxlength="150"
+    >
+
+    <div id="ownerUsersList">
+      <p class="support-loading">Loading users...</p>
+    </div>
+  </div>
+</section>
 
     <footer>
       <div class="footer-brand">
