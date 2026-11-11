@@ -368,17 +368,17 @@ const HOSTING_CATEGORIES = [
   }
 ];
 
-function planImage(plan) {
+function planImage(planId) {
   const images = {
-    corona: "/images/corona.png",
-    esmeralda: "/images/esmeralda.png",
-    diamante: "/images/diamante.png",
-    netherite: "/images/netherire.png",
-    rubi: "/images/rubi.png",
-    amatista: "/images/amatista.png"
+    corona: "/images/corona.png?v=2",
+    esmeralda: "/images/esmeralda.png?v=2",
+    diamante: "/images/diamante.png?v=2",
+    netherite: "/images/netherire.png?v=2",
+    rubi: "/images/rubi.png?v=2",
+    amatista: "/images/amatista.png?v=2"
   };
 
-  return images[plan.id] || "";
+  return images[planId] || "/images/minecraft.png?v=2";
 }
 
 /* --------------------------------
