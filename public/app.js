@@ -466,7 +466,7 @@ function openHostingCategory(categoryId) {
       style="--plan-color:${plan.color};--plan-glow:${plan.glow}"
     >
       <div class="plan-art">
-        <img src="${planImage(plan)}" alt="${plan.name}">
+        <img src="${planImage(plan.id)}" alt="${plan.name}">
       </div>
 
       <span class="plan-label">MINECRAFT PLAN</span>
@@ -518,7 +518,7 @@ function renderPlanChoices() {
         required
       >
 
-      <img src="${planImage(plan)}" alt="${plan.name}">
+      <img src="${planImage(plan.id)}" alt="${plan.name}">
       <strong>${plan.name}</strong>
       <small>
         ${plan.ram} GB RAM · ${plan.cpu} CPU · ${plan.disk} GB SSD
