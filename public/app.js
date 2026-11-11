@@ -401,7 +401,7 @@ function renderPlans() {
       data-hosting-category="${category.id}"
     >
       <div class="hosting-category-image">
-        <img src="${category.image}" alt="${category.name}">
+        <img src="${category.image}${category.image.includes("?") ? "&" : "?"}v=2" alt="${category.name}">
       </div>
 
       <h3>${category.name}</h3>
