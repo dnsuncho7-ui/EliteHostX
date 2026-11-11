@@ -228,13 +228,31 @@
       </div>
     </section>
 
-    <section class="page-section" id="section-hosting-plans" data-title="Hosting Plans" data-description="Compare the resources available in each plan.">
-      <div class="section-heading">
-        <h2>Choose your power</h2>
-        <p>Prices will be announced soon. Plan cards are a catalog; server provisioning is not connected yet.</p>
-      </div>
-      <div class="plans-grid" id="plansGrid"></div>
-    </section>
+    
+<section class="page-section" id="section-hosting-plans"
+  data-title="Hosting Plans"
+  data-description="Explore our hosting categories and plans.">
+
+  <div class="section-heading">
+    <h2>Choose your hosting</h2>
+    <p>Select a hosting category to explore our available plans.</p>
+  </div>
+
+  <div class="hosting-categories" id="hostingCategories"></div>
+
+  <div class="hosting-category-content hidden" id="hostingCategoryContent">
+    <button type="button" class="secondary-button" id="backHostingCategories">
+      ← BACK TO CATEGORIES
+    </button>
+
+    <div class="section-heading">
+      <h2 id="hostingCategoryTitle">Minecraft Hosting</h2>
+      <p id="hostingCategoryDescription">Choose your Minecraft plan.</p>
+    </div>
+
+    <div class="plans-grid" id="plansGrid"></div>
+  </div>
+</section>
 
     <section class="page-section" id="section-create-server" data-title="Create Server" data-description="Configure a server request using one of our hosting plans.">
       <div class="content-card create-panel">

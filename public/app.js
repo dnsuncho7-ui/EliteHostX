@@ -332,90 +332,199 @@ const SECTION_INFO = {
   }
 };
 
+
 /* --------------------------------
-   PLAN IMAGES
+   HOSTING CATEGORIES AND PLAN IMAGES
 -------------------------------- */
 
+const HOSTING_CATEGORIES = [
+  {
+    id: "vps",
+    name: "VPS HOSTING",
+    image: "/images/vps.png",
+    description: "Powerful virtual private servers.",
+    plans: []
+  },
+  {
+    id: "minecraft",
+    name: "MINECRAFT HOSTING",
+    image: "/images/minecraft.png",
+    description: "Choose your Minecraft server plan.",
+    plans: HOSTING_PLANS
+  },
+  {
+    id: "web",
+    name: "WEB HOSTING",
+    image: "/images/web.png",
+    description: "Reliable hosting for your website.",
+    plans: []
+  },
+  {
+    id: "bot",
+    name: "BOT HOSTING",
+    image: "/images/bot.png",
+    description: "Hosting for your bots and applications.",
+    plans: []
+  }
+];
+
 function planImage(plan) {
-  const palettes = {
-    crown: ["#fff2a8", "#d49a19", "#8a5a08"],
-    emerald: ["#a8ffd9", "#18b879", "#07583f"],
-    diamond: ["#e4fbff", "#55c9f2", "#2473b5"],
-    netherite: ["#e2e5eb", "#777f8e", "#343b49"],
-    ruby: ["#ffc0ca", "#e33d61", "#82152f"],
-    amethyst: ["#f0d9ff", "#a879ed", "#56318f"]
+  const images = {
+    corona: "/images/corona.png",
+    esmeralda: "/images/esmeralda.png",
+    diamante: "/images/diamante.png",
+    netherite: "/images/netherire.png",
+    rubi: "/images/rubi.png",
+    amatista: "/images/amatista.png"
   };
 
-  const [light, mid, dark] = palettes[plan.gem];
-
-  const art = plan.gem === "crown"
-    ? `<path d="M18 35 8 13l20 13 12-20 12 20 20-13-10 22-44 0Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="M20 42h40l-4 12H24Z" fill="${dark}"/><circle cx="40" cy="12" r="4" fill="${light}"/>`
-    : plan.gem === "netherite"
-      ? `<path d="M40 5 67 20 62 53 40 70 18 53 13 20Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="m40 5 0 65M13 20l49 33M67 20 18 53" stroke="${light}" stroke-opacity=".55" stroke-width="2"/>`
-      : `<path d="M40 5 65 25 55 58 40 70 25 58 15 25Z" fill="url(#g)" stroke="${light}" stroke-width="2"/><path d="M40 5 40 70M15 25h50M25 58l15-33 15 33" fill="none" stroke="${light}" stroke-opacity=".65" stroke-width="2"/>`;
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${light}"/><stop offset=".48" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/></linearGradient></defs><ellipse cx="40" cy="72" rx="24" ry="5" fill="#000" opacity=".25"/>${art}</svg>`;
-
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  return images[plan.id] || "";
 }
 
 /* --------------------------------
    RENDER HOSTING PLANS
 -------------------------------- */
 
+let selectedHostingCategory = null;
+
 function renderPlans() {
-  const grid = document.getElementById("plansGrid");
-  const choices = document.getElementById("planChoice");
+  const categories = document.getElementById("hostingCategories");
+  const content = document.getElementById("hostingCategoryContent");
+  const backButton = document.getElementById("backHostingCategories");
 
-  if (grid) {
-    grid.innerHTML = HOSTING_PLANS.map(plan => `
-      <article class="plan-card" style="--plan-color:${plan.color};--plan-glow:${plan.glow}">
-        <div class="plan-art">
-          <img src="${planImage(plan)}" alt="${plan.name}">
-        </div>
-        <span class="plan-label">ELITEHOSTX PLAN</span>
-        <h3>${plan.name}</h3>
-        <p class="plan-ram">${plan.ram} GB RAM</p>
-        <div class="plan-specs">
-          <span>⚡ ${plan.cpu} CPU</span>
-          <span>▣ ${plan.disk} GB SSD</span>
-        </div>
-        <p class="plan-price">PRECIO PRÓXIMAMENTE</p>
-        <button type="button" class="plan-select-button" data-plan="${plan.id}">
-          SELECT PLAN
-        </button>
-      </article>
-    `).join("");
+  if (!categories || !content) return;
 
-    grid.querySelectorAll("[data-plan]").forEach(button => {
+  categories.innerHTML = HOSTING_CATEGORIES.map(category => `
+    <button
+      type="button"
+      class="hosting-category-card"
+      data-hosting-category="${category.id}"
+    >
+      <div class="hosting-category-image">
+        <img src="${category.image}" alt="${category.name}">
+      </div>
+
+      <h3>${category.name}</h3>
+      <p>${category.description}</p>
+
+      <span class="hosting-category-action">
+        EXPLORE PLANS →
+      </span>
+    </button>
+  `).join("");
+
+  categories.querySelectorAll("[data-hosting-category]")
+    .forEach(button => {
       button.addEventListener("click", () => {
-        navigateTo("create-server");
-
-        const radio = document.querySelector(
-          `input[name="hostingPlan"][value="${button.dataset.plan}"]`
-        );
-
-        if (radio) radio.checked = true;
+        openHostingCategory(button.dataset.hostingCategory);
       });
     });
+
+  backButton?.addEventListener("click", () => {
+    selectedHostingCategory = null;
+    content.classList.add("hidden");
+    categories.classList.remove("hidden");
+  });
+
+  renderPlanChoices();
+}
+
+function openHostingCategory(categoryId) {
+  const category = HOSTING_CATEGORIES.find(
+    item => item.id === categoryId
+  );
+
+  if (!category) return;
+
+  selectedHostingCategory = categoryId;
+
+  const categories = document.getElementById("hostingCategories");
+  const content = document.getElementById("hostingCategoryContent");
+  const title = document.getElementById("hostingCategoryTitle");
+  const description = document.getElementById("hostingCategoryDescription");
+  const grid = document.getElementById("plansGrid");
+
+  categories.classList.add("hidden");
+  content.classList.remove("hidden");
+
+  title.textContent = category.name;
+  description.textContent = category.description;
+
+  if (!category.plans.length) {
+    grid.innerHTML = `
+      <div class="hosting-empty-state">
+        <h3>Plans coming soon</h3>
+        <p>We're preparing the plans for this hosting category.</p>
+      </div>
+    `;
+    return;
   }
 
-  if (choices) {
-    choices.innerHTML = HOSTING_PLANS.map((plan, index) => `
-      <label class="plan-option">
-        <input
-          type="radio"
-          name="hostingPlan"
-          value="${plan.id}"
-          ${index === 0 ? "checked" : ""}
-          required
-        >
+  grid.innerHTML = category.plans.map(plan => `
+    <article
+      class="plan-card"
+      style="--plan-color:${plan.color};--plan-glow:${plan.glow}"
+    >
+      <div class="plan-art">
         <img src="${planImage(plan)}" alt="${plan.name}">
-        <strong>${plan.name}</strong>
-        <small>${plan.ram} GB RAM · ${plan.cpu} CPU · ${plan.disk} GB SSD</small>
-      </label>
-    `).join("");
-  }
+      </div>
+
+      <span class="plan-label">MINECRAFT PLAN</span>
+      <h3>${plan.name}</h3>
+      <p class="plan-ram">${plan.ram} GB RAM</p>
+
+      <div class="plan-specs">
+        <span>⚡ ${plan.cpu} CPU</span>
+        <span>▣ ${plan.disk} GB SSD</span>
+      </div>
+
+      <p class="plan-price">PRECIO PRÓXIMAMENTE</p>
+
+      <button
+        type="button"
+        class="plan-select-button"
+        data-plan="${plan.id}"
+      >
+        SELECT PLAN
+      </button>
+    </article>
+  `).join("");
+
+  grid.querySelectorAll("[data-plan]").forEach(button => {
+    button.addEventListener("click", () => {
+      navigateTo("create-server");
+
+      const radio = document.querySelector(
+        `input[name="hostingPlan"][value="${button.dataset.plan}"]`
+      );
+
+      if (radio) radio.checked = true;
+    });
+  });
+}
+
+function renderPlanChoices() {
+  const choices = document.getElementById("planChoice");
+
+  if (!choices) return;
+
+  choices.innerHTML = HOSTING_PLANS.map((plan, index) => `
+    <label class="plan-option">
+      <input
+        type="radio"
+        name="hostingPlan"
+        value="${plan.id}"
+        ${index === 0 ? "checked" : ""}
+        required
+      >
+
+      <img src="${planImage(plan)}" alt="${plan.name}">
+      <strong>${plan.name}</strong>
+      <small>
+        ${plan.ram} GB RAM · ${plan.cpu} CPU · ${plan.disk} GB SSD
+      </small>
+    </label>
+  `).join("");
 }
 
 /* --------------------------------
