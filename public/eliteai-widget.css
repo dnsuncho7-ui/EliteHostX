@@ -282,3 +282,50 @@
         animation-duration: 2s;
     }
 }
+
+
+/* =========================================
+   ELITEHOSTX - SOCIAL FLOATING BUTTONS
+========================================= */
+
+.eliteai-social-links {
+    position: absolute;
+    right: 76px;
+    bottom: 13px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.eliteai-social-link {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .2s ease;
+}
+
+.eliteai-social-link:hover {
+    transform: translateY(-4px) scale(1.08);
+}
+
+.eliteai-social-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .eliteai-social-links {
+        right: 68px;
+        bottom: 10px;
+        gap: 7px;
+    }
+
+    .eliteai-social-link {
+        width: 34px;
+        height: 34px;
+    }
+}

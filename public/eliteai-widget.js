@@ -82,7 +82,37 @@
 
     footer.append(form, disclaimer);
     panel.append(header, messages, footer);
-    widget.append(panel, launcher);
+    
+// Botones de redes sociales
+const socialLinks = createElement("div", "eliteai-social-links");
+
+const discordLink = createElement("a", "eliteai-social-link");
+discordLink.href = "https://discord.gg/xMFed3D5KR";
+discordLink.target = "_blank";
+discordLink.rel = "noopener noreferrer";
+discordLink.setAttribute("aria-label", "Discord");
+
+const discordIcon = createElement("img");
+discordIcon.src = "/images/discord.png";
+discordIcon.alt = "Discord";
+
+discordLink.appendChild(discordIcon);
+
+const whatsappLink = createElement("a", "eliteai-social-link");
+whatsappLink.href = "https://wa.me/573145879558";
+whatsappLink.target = "_blank";
+whatsappLink.rel = "noopener noreferrer";
+whatsappLink.setAttribute("aria-label", "WhatsApp");
+
+const whatsappIcon = createElement("img");
+whatsappIcon.src = "/images/whatsapp.png";
+whatsappIcon.alt = "WhatsApp";
+
+whatsappLink.appendChild(whatsappIcon);
+
+socialLinks.append(discordLink, whatsappLink);
+
+widget.append(panel, socialLinks, launcher);
 
     document.body.appendChild(widget);
 
