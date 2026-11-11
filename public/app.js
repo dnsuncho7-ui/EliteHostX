@@ -141,6 +141,10 @@ function openEliteModal({
     overlay.appendChild(card);
     document.body.appendChild(overlay);
 
+    requestAnimationFrame(() => {
+  overlay.classList.add("is-visible");
+});
+
     let finished = false;
 
     function finish(value) {
