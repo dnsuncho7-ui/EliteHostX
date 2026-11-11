@@ -371,11 +371,11 @@ const HOSTING_CATEGORIES = [
 function planImage(plan) {
   const images = {
     corona: "/images/corona.png",
-    esmeralda: "/images/esmeralda.png",
-    diamante: "/images/diamante.png",
-    netherite: "/images/netherire.png",
-    rubi: "/images/rubi.png",
-    amatista: "/images/amatista.png"
+    esmeralda: "/images/esmeralda-2.png",
+    diamante: "/images/diamante-2.png",
+    netherite: "/images/netherire-2.png",
+    rubi: "/images/rubi-2.png",
+    amatista: "/images/amatista-2.png"
   };
 
   return images[plan.id] || "";
